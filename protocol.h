@@ -14,9 +14,9 @@ constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 
 constexpr char SC_LOGIN_INFO = 2;
-constexpr char SC_ADD_PLAYER = 3;
-constexpr char SC_REMOVE_PLAYER = 4;
-constexpr char SC_MOVE_PLAYER = 5;
+constexpr char SC_ADD_OBJECT = 3;
+constexpr char SC_REMOVE_OBJECT = 4;
+constexpr char SC_MOVE_OBJECT = 5;
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
@@ -39,7 +39,7 @@ struct SC_LOGIN_INFO_PACKET {
 	short	x, y;
 };
 
-struct SC_ADD_PLAYER_PACKET {
+struct SC_ADD_OBJECT_PACKET {
 	unsigned char size;
 	char	type;
 	int	id;
@@ -47,13 +47,13 @@ struct SC_ADD_PLAYER_PACKET {
 	char	name[NAME_SIZE];
 };
 
-struct SC_REMOVE_PLAYER_PACKET {
+struct SC_REMOVE_OBJECT_PACKET {
 	unsigned char size;
 	char	type;
 	int	id;
 };
 
-struct SC_MOVE_PLAYER_PACKET {
+struct SC_MOVE_OBJECT_PACKET {
 	unsigned char size;
 	char	type;
 	int	id;

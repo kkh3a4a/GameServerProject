@@ -8,7 +8,6 @@
 #pragma comment(lib, "MSWSock.lib")
 using namespace std;
 
-constexpr int VIEW_RANGE = 6;
 
 
 
@@ -17,7 +16,7 @@ void initObject()
 {
 	for (int i = 0; i < MAX_USER; ++i)
 	{
-		objects[i] = new Player(i , ST_UNUSED);
+		objects[i] = new Player(i , ST_FREE);
 		Player* player = reinterpret_cast<Player*>(objects[i]);
 
 	}

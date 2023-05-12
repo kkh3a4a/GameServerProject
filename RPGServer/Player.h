@@ -6,16 +6,17 @@ class Player : public Object
 public:
 	
 	WSA_OVER_EX _wsa_recv_over;
-	S_STATE	_state = ST_UNUSED;
+	S_STATE	_state = ST_FREE;
 	SOCKET	_socket;
 	int		_prev_size{};
 	char	_packet_buf[BUF_SIZE]{};
-	char	_name[NAME_SIZE];
-	std::mutex _s_lock;
+	
+	std::shared_mutex _s_lock;
 	Player(int id, S_STATE _state);
 	~Player();
 
 	void send_packet(void* packet);
 	void do_recv();
 	void send_login_info_packet();
+	void send_add_object_packet(int o_id);
 };

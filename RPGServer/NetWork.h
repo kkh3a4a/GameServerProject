@@ -15,8 +15,8 @@ extern HANDLE h_iocp;
 bool CAS(volatile int* addr, int expected, int update);
 extern SOCKET g_s_socket, g_c_socket;
 
-enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME, ST_UNUSED };
-
+enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
+constexpr int VIEW_RANGE = 6;
 
 
 enum IOCPOP
@@ -47,3 +47,5 @@ public:
 
 int get_new_player_id();
 
+
+bool can_see(int p1, int p2);

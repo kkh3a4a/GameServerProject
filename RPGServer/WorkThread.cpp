@@ -12,7 +12,6 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		WSAOVERLAPPED* over = nullptr;
 		
 		BOOL ret = GetQueuedCompletionStatus(h_iocp, &num_bytes, &key, &over, INFINITE);
-		cout << key << endl;
 		WSA_OVER_EX* ex_over = reinterpret_cast<WSA_OVER_EX*>(over);
 		if (FALSE == ret) {
 			if (ex_over->_iocpop == OP_ACCEPT) cout << "Accept Error";
@@ -33,13 +32,12 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		switch (ex_over->_iocpop) {
 		case OP_ACCEPT: {
 			int p_id = get_new_player_id();
-			cout << p_id << endl;
 			if (p_id != -1)
 			{
 
 				Player* player = reinterpret_cast<Player*>(objects[p_id]);
 				{
-					lock_guard<mutex> ll(player->_s_lock);
+					std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 					player->_state = ST_ALLOC;
 				}
 				player->_x = 0;

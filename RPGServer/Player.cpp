@@ -19,9 +19,7 @@ void Player::send_packet(void* packet)
 	char* buf = reinterpret_cast<char*>(packet);
 
 	WSA_OVER_EX* _wsa_send_over = new WSA_OVER_EX(OP_SEND, buf[0], packet);
-
-	if (_state == S_STATE::ST_INGAME)
-		WSASend(_socket, &_wsa_send_over->_wsabuf, 1, NULL, 0, &_wsa_send_over->_wsaover, NULL);
+	int ret = WSASend(_socket, &_wsa_send_over->_wsabuf, 1, NULL, 0, &_wsa_send_over->_wsaover, NULL);
 }
 
 void Player::do_recv()
@@ -43,5 +41,27 @@ void Player::send_login_info_packet()
 	packet.type = SC_LOGIN_INFO;
 	packet.x = _x;
 	packet.y = _y;
+	send_packet(&packet);
+}
+
+void Player::send_add_object_packet(int o_id)
+{
+	/*{
+		std::unique_lock<std::shared_mutex> lock(_vl);
+		if (_view_list.count(c_id) != 0) {
+			lock.unlock();
+			send_move_packet(c_id);
+			return;
+		}
+		_view_list.insert(c_id);
+	}*/
+	
+	SC_ADD_OBJECT_PACKET packet;
+	packet.id = o_id;
+	strcpy_s(packet.name, objects[o_id]->_name);
+	packet.size = sizeof(packet);
+	packet.type = SC_ADD_OBJECT;
+	packet.x = objects[o_id]->_x;
+	packet.y = objects[o_id]->_y;
 	send_packet(&packet);
 }

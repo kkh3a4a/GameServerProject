@@ -7,6 +7,7 @@ public:
 	Object();
 
 	int _x, _y, _z;		//location
-	int _id;		
+	int _id;	
+	char _name[20]{};
 
 };

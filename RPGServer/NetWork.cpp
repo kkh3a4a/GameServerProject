@@ -10,7 +10,8 @@ bool IsNight;
 
 SOCKET g_s_socket, g_c_socket;
 
-
+//std::shared_lock<std::shared_mutex> lock(player->_s_lock);
+//std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 WSA_OVER_EX::WSA_OVER_EX()
 {
 	return;
@@ -34,56 +35,40 @@ void WSA_OVER_EX::processpacket(int client_id, char* pk)
 	case CS_LOGIN:
 	{
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
-		std::cout << client_id << " login : " << packet->name << std::endl;
 		player->_x = rand() % W_WIDTH;
 		player->_y = rand() % W_HEIGHT;
-		{
-			std::lock_guard<std::mutex> ll{ player->_s_lock };
-			player->_state = ST_INGAME;
-		}
+	
 		strcpy_s(player->_name, packet->name);
 		player->send_login_info_packet();
-
-		/*strcpy_s(clients[c_id]._name, p->name);
-				clients[c_id].x = rand() % W_WIDTH;
-				clients[c_id].y = rand() % W_HEIGHT;
-				clients[c_id].send_login_info_packet();
+		{
+			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+			player->_state = ST_INGAME;
+		}
+		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
+			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			{
+				std::shared_lock<std::shared_mutex> lock(pl->_s_lock);
+				if (pl->_state != ST_INGAME)
 				{
-					lock_guard<mutex> ll{ clients[c_id]._s_lock };
-					clients[c_id]._state = ST_INGAME;
+					continue;				
 				}
-				for (auto& pl : clients) {
-					{
-						lock_guard<mutex> ll(pl._s_lock);
-						if (pl._state == ST_INGAME)
-						{
-						}
-						else if (pl._state == ST_FREE || pl._state == ST_ALLOC)
-						{
-							continue;
-						}
-						else if (pl._state == ST_UNUSED)
-						{
-							continue;
-						}
-					}
-		
-					if (pl._id == c_id) continue;
-					if (can_see(c_id, pl._id) == false) continue;
-		
-					pl.send_add_player_packet(c_id);
-					clients[c_id].send_add_player_packet(pl._id);
-					if (pl._id >= MAX_USER)
-					{
-						bool before_wake = clients[pl._id]._n_wake;
-						if (before_wake == false)
-						{
-							if (CAS(&clients[pl._id]._n_wake, before_wake, true))
-								wake_up_npc(pl._id);
-						}
-					}
+			}
+
+			if (pl->_id == player->_id) continue;
+			//if (can_see(player->_id, pl->_id) == false) continue;
+
+			pl->send_add_object_packet(player->_id);
+			player->send_add_object_packet(pl->_id);
+			/*if (pl._id >= MAX_USER)
+			{
+				bool before_wake = clients[pl._id]._n_wake;
+				if (before_wake == false)
+				{
+					if (CAS(&clients[pl._id]._n_wake, before_wake, true))
+						wake_up_npc(pl._id);
 				}
-				break;*/
+			}*/
+		}
 		break;
 	}
 	//case CS_PACKET_MOVE:
@@ -200,9 +185,17 @@ int get_new_player_id()
 {
 	for (int i = 0; i < MAX_USER; ++i) {
 		Player* player = reinterpret_cast<Player*>(objects[i]);
-		std::lock_guard <std::mutex> ll{ player->_s_lock };
-		if (player->_state == ST_FREE || player->_state == ST_UNUSED)
+		std::shared_lock<std::shared_mutex> lock(player->_s_lock);
+		if (player->_state == ST_FREE)
 			return i;
 	}
 	return -1;
+}
+
+bool can_see(int o1, int o2)
+{
+	// return VIEW_RANGE <= SQRT((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2);
+	if (abs(objects[o1]->_x - objects[o2]->_x) > VIEW_RANGE) return false;
+	if (abs(objects[o1]->_y - objects[o2]->_y) > VIEW_RANGE) return false;
+	return true;
 }
