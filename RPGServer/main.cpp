@@ -2,6 +2,8 @@
 #include "NetWork.h"
 #include"WorkThread.h"
 #include"Player.h"
+#include"Zone.h"
+#include"DefaultNPC.h"
 #include <concurrent_unordered_set.h>
 
 #pragma comment(lib, "WS2_32.lib")
@@ -17,16 +19,27 @@ void initObject()
 	for (int i = 0; i < MAX_USER; ++i)
 	{
 		objects[i] = new Player(i , ST_FREE);
-		Player* player = reinterpret_cast<Player*>(objects[i]);
-
+	}
+	for (int i = MAX_USER; i < MAX_USER + MAX_NPC; ++i)
+	{
+		objects[i] = new NPC;
 	}
 	cout << "init Object" << endl;
 }
 
+void initZone()
+{
+	for (int x = 0; x < ZONE_Y; ++x)
+	{
+		for(int y=0; y<ZONE_X;++y)
+		zone[y][x] = new ZoneManager;
+	}
+}
 
 
 int main() {
 	initObject();
+	initZone();
 	WSADATA WSAData;
 	WSAStartup(MAKEWORD(2, 2), &WSAData);
 	g_s_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);

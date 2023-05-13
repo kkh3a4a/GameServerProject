@@ -1,6 +1,6 @@
 #include"WorkThread.h"
 #include"Player.h"
-
+#include"Zone.h"
 using namespace std;
 
 

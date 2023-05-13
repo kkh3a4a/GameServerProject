@@ -8,7 +8,9 @@ constexpr int MAXOBJECT = MAX_USER + MAX_NPC;
 
 constexpr int W_WIDTH = 2000;
 constexpr int W_HEIGHT = 2000;
-constexpr int ZONE_SEC = 40;
+constexpr int ZONE_SEC = 50;
+constexpr int ZONE_X = (W_WIDTH / ZONE_SEC);
+constexpr int ZONE_Y = (W_HEIGHT / ZONE_SEC);
 // Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;

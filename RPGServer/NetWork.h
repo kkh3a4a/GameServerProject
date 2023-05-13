@@ -8,6 +8,7 @@
 #include<set>
 #include "../protocol.h"
 #include"Object.h"
+//#include"Zone.h"
 
 using namespace std;
 
@@ -15,10 +16,9 @@ extern std::array<class Object*, MAXOBJECT> objects;
 extern HANDLE h_iocp;
 bool CAS(volatile int* addr, int expected, int update);
 extern SOCKET g_s_socket, g_c_socket;
-
 enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
 constexpr int VIEW_RANGE = 6;
-
+extern  std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
 
 enum IOCPOP
 {

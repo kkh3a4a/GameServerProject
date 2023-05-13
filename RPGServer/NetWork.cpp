@@ -1,17 +1,18 @@
 
 #include "NetWork.h"
 #include "Player.h"
+#include"Zone.h"
 #include<iostream>
 
 std::array<Object*, MAXOBJECT> objects;
 HANDLE h_iocp;
-bool IsNight;
-
+bool IsNight; 
 
 SOCKET g_s_socket, g_c_socket;
-
+std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+
 WSA_OVER_EX::WSA_OVER_EX()
 {
 	return;
@@ -37,17 +38,23 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
-	/*	player->_x = rand() % W_WIDTH;
+		/*player->_x = rand() % W_WIDTH;
 		player->_y = rand() % W_HEIGHT;*/
-		player->_x = 50 + o_id * 10;
-		player->_y = 50 + o_id * 10;
+		
+		player->_x = 49 + o_id * 1;
+		player->_y = 49 + o_id * 1;
+
+		zone[player->_y / ZONE_SEC][player->_x / ZONE_SEC]->ADD(player->_id);
+
 		strcpy_s(player->_name, packet->name);
 		player->send_login_info_packet();
 		{
 			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 			player->_state = ST_INGAME;
 		}
-		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
+		set<int> z_list;
+		zone[player->_y / ZONE_SEC][player->_x / ZONE_SEC]->Zonelist(z_list);
+		for (auto& p_id : z_list) {
 			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 			{
 				std::shared_lock<std::shared_mutex> lock(pl->_s_lock);
@@ -96,6 +103,9 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 		}
 
 		unordered_set <int> new_vl;
+
+		set<int> z_list;
+		zone[player->_y / ZONE_SEC][player->_x / ZONE_SEC]->Zonelist(z_list);
 		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
 			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 			{

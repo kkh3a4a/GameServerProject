@@ -3,7 +3,6 @@
 
 
 
-
 Player::Player(int id, S_STATE state)
 {
 	_x = 0; _y = 0; _z = 0;

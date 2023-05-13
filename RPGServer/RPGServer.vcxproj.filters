@@ -25,6 +25,12 @@
     <Filter Include="소스 파일\WorkThread">
       <UniqueIdentifier>{aa01b093-b7af-4e55-a246-c1b108715728}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Object\DefaultNPC">
+      <UniqueIdentifier>{452de979-481c-46c9-849d-4e3dac9a9c6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Zone">
+      <UniqueIdentifier>{e8ca3e3d-598a-4056-8462-52bb1ba3cbbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,6 +48,12 @@
     <ClCompile Include="Player.cpp">
       <Filter>소스 파일\Object\Player</Filter>
     </ClCompile>
+    <ClCompile Include="DefaualtNPC.cpp">
+      <Filter>소스 파일\Object\DefaultNPC</Filter>
+    </ClCompile>
+    <ClCompile Include="Zone.cpp">
+      <Filter>소스 파일\Zone</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Object.h">
@@ -58,6 +70,12 @@
     </ClInclude>
     <ClInclude Include="WorkThread.h">
       <Filter>소스 파일\WorkThread</Filter>
+    </ClInclude>
+    <ClInclude Include="DefaultNPC.h">
+      <Filter>소스 파일\Object\DefaultNPC</Filter>
+    </ClInclude>
+    <ClInclude Include="Zone.h">
+      <Filter>소스 파일\Zone</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
