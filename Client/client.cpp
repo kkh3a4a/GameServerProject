@@ -137,7 +137,6 @@ void ProcessPacket(char* ptr)
 	{
 		SC_ADD_OBJECT_PACKET * my_packet = reinterpret_cast<SC_ADD_OBJECT_PACKET*>(ptr);
 		int id = my_packet->id;
-		cout << id << " is login" << endl;
 		if (id == g_myid) {
 			avatar.move(my_packet->x, my_packet->y);
 			g_left_x = my_packet->x - 7;

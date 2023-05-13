@@ -107,8 +107,8 @@ public:
 		do_send(&p);
 	}
 	void send_move_packet(int c_id);
-	void send_add_player_packet(int c_id);
-	void send_remove_player_packet(int c_id)
+	void send_add_object_packet(int c_id);
+	void send_remove_object_packet(int c_id)
 	{
 		if (_view_list.count(c_id) != 0)
 		{
@@ -120,10 +120,10 @@ public:
 				}
 				_view_list.erase(c_id);
 			}
-			SC_REMOVE_PLAYER_PACKET p;
+			SC_REMOVE_OBJECT_PACKET p;
 			p.id = c_id;
 			p.size = sizeof(p);
-			p.type = SC_REMOVE_PLAYER;
+			p.type = SC_REMOVE_OBJECT;
 			do_send(&p);
 		}
 
@@ -164,10 +164,10 @@ void SESSION::send_move_packet(int c_id)
 		std::shared_lock<std::shared_mutex> lock(_vl);
 		if (_view_list.count(c_id) != 0) {
 			lock.unlock();
-			SC_MOVE_PLAYER_PACKET p;
+			SC_MOVE_OBJECT_PACKET p;
 			p.id = c_id;
-			p.size = sizeof(SC_MOVE_PLAYER_PACKET);
-			p.type = SC_MOVE_PLAYER;
+			p.size = sizeof(SC_MOVE_OBJECT_PACKET);
+			p.type = SC_MOVE_OBJECT;
 			p.x = clients[c_id].x;
 			p.y = clients[c_id].y;
 			p.move_time = clients[c_id]._last_move_time;
@@ -175,12 +175,12 @@ void SESSION::send_move_packet(int c_id)
 		}
 		else {
 			lock.unlock();
-			send_add_player_packet(c_id);
+			send_add_object_packet(c_id);
 		}
 	}
 }
 
-void SESSION::send_add_player_packet(int c_id)
+void SESSION::send_add_object_packet(int c_id)
 {
 	{
 		std::unique_lock<std::shared_mutex> lock(_vl);
@@ -192,11 +192,11 @@ void SESSION::send_add_player_packet(int c_id)
 		_view_list.insert(c_id);
 	}
 
-	SC_ADD_PLAYER_PACKET add_packet;
+	SC_ADD_OBJECT_PACKET add_packet;
 	add_packet.id = c_id;
 	strcpy_s(add_packet.name, clients[c_id]._name);
 	add_packet.size = sizeof(add_packet);
-	add_packet.type = SC_ADD_PLAYER;
+	add_packet.type = SC_ADD_OBJECT;
 	add_packet.x = clients[c_id].x;
 	add_packet.y = clients[c_id].y;
 	do_send(&add_packet);
@@ -259,8 +259,8 @@ void process_packet(int c_id, char* packet)
 			if (pl._id == c_id) continue;
 			if (can_see(c_id, pl._id) == false) continue;
 
-			pl.send_add_player_packet(c_id);
-			clients[c_id].send_add_player_packet(pl._id);
+			pl.send_add_object_packet(c_id);
+			clients[c_id].send_add_object_packet(pl._id);
 			if (pl._id >= MAX_USER)
 			{
 				bool before_wake = clients[pl._id]._n_wake;
@@ -315,8 +315,8 @@ void process_packet(int c_id, char* packet)
 			if (!is_NPC(o))
 			{
 				if (old_vl.count(o) == 0) {
-					clients[o].send_add_player_packet(c_id);
-					clients[c_id].send_add_player_packet(o);
+					clients[o].send_add_object_packet(c_id);
+					clients[c_id].send_add_object_packet(o);
 				}
 				else {
 					clients[o].send_move_packet(c_id);
@@ -342,10 +342,10 @@ void process_packet(int c_id, char* packet)
 			if (clients[op]._id == c_id) continue;
 			if (new_vl.count(op) == 0)
 			{
-				clients[c_id].send_remove_player_packet(op);
+				clients[c_id].send_remove_object_packet(op);
 				if (!is_NPC(op))
 				{
-					clients[op].send_remove_player_packet(c_id);
+					clients[op].send_remove_object_packet(c_id);
 				}
 			}
 		}
@@ -371,7 +371,7 @@ void disconnect(int c_id)
 			}
 		}
 		if (pl._id == c_id) continue;
-		pl.send_remove_player_packet(c_id);
+		pl.send_remove_object_packet(c_id);
 	}
 	closesocket(clients[c_id]._socket);
 
@@ -509,13 +509,13 @@ void do_random_move(int n_id)
 		}
 		else {
 			cpl._vl.unlock();
-			cpl.send_add_player_packet(n_id);
+			cpl.send_add_object_packet(n_id);
 		}
 	}
 
 	for (auto& pl : old_vlist) {
 		if (0 == near_list.count(pl)) {
-			clients[pl].send_remove_player_packet(n_id);
+			clients[pl].send_remove_object_packet(n_id);
 		}
 	}
 

@@ -1,14 +1,15 @@
 #pragma once
-#pragma once
 #include <WS2tcpip.h>
 #include <MSWSock.h>
 #include <array>
-#include<shared_mutex>
 #include<queue>
 #include<mutex>
 #include<iostream>
+#include<set>
 #include "../protocol.h"
 #include"Object.h"
+
+using namespace std;
 
 extern std::array<class Object*, MAXOBJECT> objects;
 extern HANDLE h_iocp;
@@ -38,8 +39,8 @@ public:
 	WSA_OVER_EX(IOCPOP iocpop, unsigned char byte, void* buf);
 
 	void processpacket(int client_id, char* packet);
-	void disconnect(int p_id);
-	void do_npc_ai(int n_id);
+	void disconnect(int o_id);
+	void do_npc_ai(int o_id);
 	void set_accept_over();
 };
 
@@ -49,3 +50,5 @@ int get_new_player_id();
 
 
 bool can_see(int p1, int p2);
+
+bool is_NPC(int _id);

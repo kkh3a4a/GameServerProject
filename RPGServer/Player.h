@@ -19,4 +19,6 @@ public:
 	void do_recv();
 	void send_login_info_packet();
 	void send_add_object_packet(int o_id);
+	void send_move_packet(int o_id);
+	void send_remove_object_packet(int o_id);
 };

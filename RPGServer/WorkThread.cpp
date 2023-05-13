@@ -46,7 +46,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 				player->_name[0] = 0;
 				player->_prev_size = 0;
 				player->_socket = g_c_socket;
-				//player->_view_list.clear();
+				player->_view_list.clear();
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_c_socket),
 					h_iocp, p_id, 0);
 				player->do_recv();

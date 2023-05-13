@@ -25,19 +25,22 @@ WSA_OVER_EX::WSA_OVER_EX(IOCPOP iocpop, unsigned char byte, void* buf)
 	_wsabuf.len = byte;
 }
 
-void WSA_OVER_EX::processpacket(int client_id, char* pk)
+void WSA_OVER_EX::processpacket(int o_id, char* pk)
 {
 	unsigned char packet_type = pk[1];
-	Player* player = reinterpret_cast<Player*>(objects[client_id]);
+
+
 
 	switch (packet_type)
 	{
 	case CS_LOGIN:
 	{
+		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
-		player->_x = rand() % W_WIDTH;
-		player->_y = rand() % W_HEIGHT;
-	
+	/*	player->_x = rand() % W_WIDTH;
+		player->_y = rand() % W_HEIGHT;*/
+		player->_x = 50 + o_id * 10;
+		player->_y = 50 + o_id * 10;
 		strcpy_s(player->_name, packet->name);
 		player->send_login_info_packet();
 		{
@@ -55,7 +58,7 @@ void WSA_OVER_EX::processpacket(int client_id, char* pk)
 			}
 
 			if (pl->_id == player->_id) continue;
-			//if (can_see(player->_id, pl->_id) == false) continue;
+			if (can_see(player->_id, pl->_id) == false) continue;
 
 			pl->send_add_object_packet(player->_id);
 			player->send_add_object_packet(pl->_id);
@@ -71,95 +74,122 @@ void WSA_OVER_EX::processpacket(int client_id, char* pk)
 		}
 		break;
 	}
-	//case CS_PACKET_MOVE:
-	//{
-	//	cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(pk);
-	//	player->w = packet->w;
-	//	player->a = packet->a;
-	//	player->s = packet->s;
-	//	player->d = packet->d;
-	//	break;
-	//}
-	//case CS_PACKET_CITIZENPLACEMENT:
-	//{
-	//	//추후 건물도 똑같이 작동할거니깐 건물도 추가해주면 좋음
+	case CS_MOVE:
+	{
+		Player* player = reinterpret_cast<Player*>(objects[o_id]);
+		CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(pk);
+		player->_last_move_time = packet->move_time;
+		short x = player->_x;
+		short y = player->_y;
+		switch (packet->direction) {
+		case 0: if (y > 0) y--; break;
+		case 1: if (y < W_HEIGHT - 1) y++; break;
+		case 2: if (x > 0) x--; break;
+		case 3: if (x < W_WIDTH - 1) x++; break;
+		}
+		player->_x = x;
+		player->_y = y;
+		unordered_set <int> old_vl;
+		{
+			std::shared_lock<std::shared_mutex> lock(player->_vl);
+			old_vl = player->_view_list;
+		}
 
-	//	cs_packet_citizenplacement* packet = reinterpret_cast<cs_packet_citizenplacement*>(pk);
-	//	if (packet->objectid >= RESOURCESTART && packet->objectid < RESOURCESTART + MAXRESOURCE)
-	//	{
-	//		Resource* resource = reinterpret_cast<Resource*> (objects[packet->objectid]);
-	//		resource->set_resource_citizen_placement(client_id, packet->isplus);
-	//	}
-	//	else if (packet->objectid >= BUILDINGSTART && packet->objectid < BUILDINGSTART + MAXBUILDING)
-	//	{
-	//		Building* building = reinterpret_cast<Building*>(objects[packet->objectid]);
-	//		building->set_building_citizen_placement(packet->isplus);
-	//	}
-	//	break;
-	//}
-	//case CS_PACKET_BUILDABLE:
-	//{
-	//	cs_packet_buildable* cs_packet = reinterpret_cast<cs_packet_buildable*>(pk);
-	//	//std::cout << "buildable" << std::endl;
-	//	sc_packet_buildable sc_packet;
-	//	for (auto& obj : objects) {
-	//		if (obj == nullptr)
-	//			continue;
-	//		if (obj->_x == 0) {
-	//			continue;
-	//		}
-	//		if (obj->_x < cs_packet->x + 800 && obj->_x > cs_packet->x - 800 && obj->_y < cs_packet->y + 800 && obj->_y > cs_packet->y - 800) {
-	//			sc_packet.buildable = false;
-	//			break;
-	//		}
-	//		sc_packet.buildable = true;
-	//	}
-	//	player->send_packet(&sc_packet);
-	//	break;
-	//}
-	//case CS_PACKET_BUILD:
-	//{
-	//	cs_packet_build* cs_packet = reinterpret_cast<cs_packet_build*>(pk);
-	//	sc_packet_build sc_packet;
+		unordered_set <int> new_vl;
+		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
+			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			{
+				shared_lock<shared_mutex> lock(pl->_s_lock);
+				if (pl->_state == ST_INGAME)
+				{
+				}
+				else if (pl->_state == ST_FREE || pl->_state == ST_ALLOC)
+				{
+					continue;
+				}
+			}
+			if (pl->_id == o_id) continue;
+			if (can_see(pl->_id, o_id)) {
+				new_vl.insert(pl->_id);
+			}
+		}
 
-	//	for (int i = BUILDINGSTART + PLAYERBUILDINGCOUNT * player->_id; i < BUILDINGSTART + PLAYERBUILDINGCOUNT * player->_id + PLAYERBUILDINGCOUNT; ++i) {
-	//		Building* building = reinterpret_cast<Building*>(objects[i]);
-	//		if (building->_type != -1)
-	//			continue;
-	//		sc_packet.id = building->_id;
-	//		sc_packet.x = cs_packet->x;
-	//		sc_packet.y = cs_packet->y;
-	//		sc_packet.building_type = cs_packet->building_type;
-	//		sc_packet.do_build = building->_create_building(cs_packet->x, cs_packet->y, cs_packet->building_type, i);
-	//		break;
-	//	}
+		
+		for (auto& o : new_vl) {
+			if (!is_NPC(o))
+			{
+				Player* pl = reinterpret_cast<Player*>(objects[o]);
 
-	//	for (int player_num = 0; player_num < MAXPLAYER; player_num++) {	//모든 플레이어들에게 전송
-	//		Player* this_player = reinterpret_cast<Player*>(objects[player_num]);
-	//		this_player->send_packet(&sc_packet);
-	//	}
-	//	break;
-	//}
-	//case CS_PACKET_MINIMAP:
-	//{
-	//	cs_packet_minimap* packet = reinterpret_cast<cs_packet_minimap*>(pk);
+				if (old_vl.count(o) == 0) {
+					pl->send_add_object_packet(o_id);
+					player->send_add_object_packet(o);
+				}
+				else {
+					pl->send_move_packet(o_id);
+					player->send_move_packet(o);
+				}
+			}
+			/*else
+			{
+				bool before_wake = clients[o]._n_wake;
+				if (before_wake == false)
+				{
+					if (cas(&clients[o]._n_wake, before_wake, true))
+						wake_up_npc(o);
+				}
+			}*/
+		}
+		player->send_move_packet(o_id);
 
-	//	//std::cout<<packet->x << ", " << packet->y << std::endl;
-	//	player->playerMinimapLocation(packet->x, packet->y);
-	//	break;
-	//}
+		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
+			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			if (pl->_state != ST_INGAME) continue;
+			if (pl->_id == o_id) continue;
+			if (new_vl.count(p_id) == 0)
+			{
+				player->send_remove_object_packet(p_id);
+				if (!is_NPC(p_id))
+				{
+					pl->send_remove_object_packet(o_id);
+				}
+			}
+		}
+		break;
+	}
 
 	default:
 	{
-		closesocket(reinterpret_cast<Player*>(objects[client_id])->_socket);
+		if(o_id >= 0 && o_id < MAX_USER)
+			closesocket(reinterpret_cast<Player*>(objects[o_id])->_socket);
 		DebugBreak();
 		break;
 	}
 	}
 }
 
-void WSA_OVER_EX::disconnect(int p_id)
+void WSA_OVER_EX::disconnect(int o_id)
 {
+	Player* player = reinterpret_cast<Player*>(objects[o_id]);
+	for (int p_id = 0; p_id < MAX_USER; ++p_id) {
+		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+		{
+			shared_lock<shared_mutex> lock(pl->_s_lock);
+			if (pl->_state != ST_INGAME)
+			{
+				continue;
+			}
+		}
+		if (pl->_id == o_id) continue;
+		pl->send_remove_object_packet(o_id);
+		
+	}
+	closesocket(player->_socket);
+	{
+		std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+		player->_state = ST_FREE;
+	}
+
+	
 }
 
 void WSA_OVER_EX::do_npc_ai(int n_id)
@@ -194,8 +224,13 @@ int get_new_player_id()
 
 bool can_see(int o1, int o2)
 {
-	// return VIEW_RANGE <= SQRT((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2);
 	if (abs(objects[o1]->_x - objects[o2]->_x) > VIEW_RANGE) return false;
 	if (abs(objects[o1]->_y - objects[o2]->_y) > VIEW_RANGE) return false;
+	return true;
+}
+
+bool is_NPC(int _id) {
+	if (_id < MAX_USER)
+		return false;
 	return true;
 }
