@@ -42,6 +42,7 @@ public:
 	void disconnect(int o_id);
 	void do_npc_ai(int o_id);
 	void set_accept_over();
+	void zone_check(int x, int y, set<int>&);
 };
 
 

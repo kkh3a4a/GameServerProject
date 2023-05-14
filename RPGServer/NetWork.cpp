@@ -38,13 +38,15 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
-		/*player->_x = rand() % W_WIDTH;
-		player->_y = rand() % W_HEIGHT;*/
-		
-		player->_x = 49 + o_id * 1;
-		player->_y = 49 + o_id * 1;
+		player->_x = rand() % W_WIDTH;
+		player->_y = rand() % W_HEIGHT;
 
-		zone[player->_y / ZONE_SEC][player->_x / ZONE_SEC]->ADD(player->_id);
+		/*player->_x = 49 + o_id * 1;
+		player->_y = 49 + o_id * 1;*/
+		int my_zoneY, my_zoneX;
+		my_zoneY = player->_y / ZONE_SEC;
+		my_zoneX = player->_x / ZONE_SEC;
+		zone[my_zoneY][my_zoneX]->ADD(player->_id);
 
 		strcpy_s(player->_name, packet->name);
 		player->send_login_info_packet();
@@ -53,14 +55,14 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 			player->_state = ST_INGAME;
 		}
 		set<int> z_list;
-		zone[player->_y / ZONE_SEC][player->_x / ZONE_SEC]->Zonelist(z_list);
+		zone_check(player->_x, player->_y, z_list);
 		for (auto& p_id : z_list) {
 			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 			{
 				std::shared_lock<std::shared_mutex> lock(pl->_s_lock);
 				if (pl->_state != ST_INGAME)
 				{
-					continue;				
+					continue;
 				}
 			}
 
@@ -105,26 +107,33 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 		unordered_set <int> new_vl;
 
 		set<int> z_list;
-		zone[player->_y / ZONE_SEC][player->_x / ZONE_SEC]->Zonelist(z_list);
-		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
-			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+		zone_check(player->_x, player->_y, z_list);
+		for (auto& p_id : z_list) {
+			if (!is_NPC(p_id))
 			{
-				shared_lock<shared_mutex> lock(pl->_s_lock);
-				if (pl->_state == ST_INGAME)
+				Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+				if (player->_id == 0)
+					cout << p_id << endl;
 				{
+					shared_lock<shared_mutex> lock(pl->_s_lock);
+					if (pl->_state == ST_INGAME)
+					{
+					}
+					else if (pl->_state == ST_FREE || pl->_state == ST_ALLOC)
+					{
+						continue;
+					}
 				}
-				else if (pl->_state == ST_FREE || pl->_state == ST_ALLOC)
-				{
-					continue;
-				}
+				if (pl->_id == o_id) continue;
 			}
-			if (pl->_id == o_id) continue;
-			if (can_see(pl->_id, o_id)) {
-				new_vl.insert(pl->_id);
+
+
+			if (can_see(p_id, o_id)) {
+				new_vl.insert(p_id);
 			}
 		}
 
-		
+
 		for (auto& o : new_vl) {
 			if (!is_NPC(o))
 			{
@@ -151,25 +160,39 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 		}
 		player->send_move_packet(o_id);
 
-		for (int p_id = 0; p_id < MAX_USER; ++p_id) {
-			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
-			if (pl->_state != ST_INGAME) continue;
-			if (pl->_id == o_id) continue;
-			if (new_vl.count(p_id) == 0)
+		for (auto& p_id : z_list) {
+
+			if (!is_NPC(p_id))
 			{
-				player->send_remove_object_packet(p_id);
-				if (!is_NPC(p_id))
+				Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+				if (pl->_state != ST_INGAME) continue;
+				if (pl->_id == o_id) continue;
+				if (new_vl.count(p_id) == 0)
 				{
-					pl->send_remove_object_packet(o_id);
+					player->send_remove_object_packet(p_id);
+					if (!is_NPC(p_id))
+					{
+						pl->send_remove_object_packet(o_id);
+					}
 				}
 			}
+			else
+			{
+				if (objects[p_id]->_id == player->_id) continue;
+				if (new_vl.count(p_id) == 0)
+				{
+					player->send_remove_object_packet(p_id);
+
+				}
+
+			}
+			
 		}
 		break;
 	}
-
 	default:
 	{
-		if(o_id >= 0 && o_id < MAX_USER)
+		if (o_id >= 0 && o_id < MAX_USER)
 			closesocket(reinterpret_cast<Player*>(objects[o_id])->_socket);
 		DebugBreak();
 		break;
@@ -177,7 +200,8 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 	}
 }
 
-void WSA_OVER_EX::disconnect(int o_id)
+
+void WSA_OVER_EX::disconnect(int o_id)	//시야처리 안된듯?
 {
 	Player* player = reinterpret_cast<Player*>(objects[o_id]);
 	for (int p_id = 0; p_id < MAX_USER; ++p_id) {
@@ -212,6 +236,60 @@ void WSA_OVER_EX::do_npc_ai(int n_id)
 void WSA_OVER_EX::set_accept_over()
 {
 	_iocpop = IOCPOP::OP_ACCEPT;
+}
+
+void WSA_OVER_EX::zone_check(int x, int y, set<int>& z_list)
+{
+	int my_zoneY, my_zoneX;
+	my_zoneY = y / ZONE_SEC;
+	my_zoneX = x / ZONE_SEC;
+
+	zone[my_zoneY][my_zoneX]->Zonelist(z_list);	//자기 zone에 있는 object 리스트에 추가
+	
+	char Zonediagonal_X = 0;
+	char Zonediagonal_Y = 0;
+
+	if (y % ZONE_SEC < VIEW_RANGE)
+	{
+		if (my_zoneY)
+		{
+			Zonediagonal_Y = -1;
+			zone[my_zoneY + Zonediagonal_Y][my_zoneX]->Zonelist(z_list);
+		}
+	}
+	else if (ZONE_SEC - (y % ZONE_SEC) < VIEW_RANGE)
+	{
+		if (my_zoneY < ZONE_Y - 1)
+		{
+			Zonediagonal_Y = 1;
+			zone[my_zoneY + Zonediagonal_Y][my_zoneX]->Zonelist(z_list);
+		}
+	}
+
+
+	if (x % ZONE_SEC < VIEW_RANGE)
+	{
+		if (my_zoneX)
+		{
+			Zonediagonal_X = -1;
+			zone[my_zoneY][my_zoneX + Zonediagonal_X]->Zonelist(z_list);
+		}
+	}
+	else if (ZONE_SEC - (y % ZONE_SEC) < VIEW_RANGE)
+	{
+		if (my_zoneX < ZONE_X - 1)
+		{
+			Zonediagonal_X = 1;
+			zone[my_zoneY][my_zoneX + Zonediagonal_X]->Zonelist(z_list);
+		}
+	}
+
+	if (Zonediagonal_X != 0 && Zonediagonal_Y != 0)
+	{
+		zone[my_zoneY + Zonediagonal_Y][my_zoneX + Zonediagonal_X]->Zonelist(z_list);
+	}
+
+	
 }
 
 
