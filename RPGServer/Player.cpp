@@ -87,20 +87,18 @@ void Player::send_move_packet(int o_id)
 
 void Player::send_remove_object_packet(int o_id)
 {
-	if (_view_list.count(o_id) != 0)
+
 	{
-		{
-			std::unique_lock<std::shared_mutex> lock(_vl);
-			if (_view_list.count(o_id) == 0) {
-				lock.unlock();
-				return;
-			}
-			_view_list.erase(o_id);
+		std::unique_lock<std::shared_mutex> lock(_vl);
+		if (_view_list.count(o_id) == 0) {
+			lock.unlock();
+			return;
 		}
-		SC_REMOVE_OBJECT_PACKET p;
-		p.id = o_id;
-		p.size = sizeof(p);
-		p.type = SC_REMOVE_OBJECT;
-		send_packet(&p);
+		_view_list.erase(o_id);
 	}
+	SC_REMOVE_OBJECT_PACKET p;
+	p.id = o_id;
+	p.size = sizeof(p);
+	p.type = SC_REMOVE_OBJECT;
+	send_packet(&p);
 }

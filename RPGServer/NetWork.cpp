@@ -46,8 +46,8 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 		player->_x = rand() % W_WIDTH;
 		player->_y = rand() % W_HEIGHT;
 
-		/*player->_x = 49 + o_id * 1;
-		player->_y = 49 + o_id * 1;*/
+		player->_x = 49 + o_id * 1;
+		player->_y = 49 + o_id * 1;
 		int my_zoneY, my_zoneX;
 		my_zoneY = player->_y / ZONE_SEC;
 		my_zoneX = player->_x / ZONE_SEC;
@@ -92,15 +92,7 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 
 			player->send_add_object_packet(objects[p_id]->_id);
 
-			/*if (pl._id >= MAX_USER)
-			{
-				bool before_wake = clients[pl._id]._n_wake;
-				if (before_wake == false)
-				{
-					if (CAS(&clients[pl._id]._n_wake, before_wake, true))
-						wake_up_npc(pl._id);
-				}
-			}*/
+			
 		}
 		break;
 	}
@@ -120,6 +112,9 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 		case 2: if (x > 0) x--; break;
 		case 3: if (x < W_WIDTH - 1) x++; break;
 		}
+		
+		player->_x = x;
+		player->_y = y;
 		int my_zoneY, my_zoneX;
 		my_zoneY = player->_y / ZONE_SEC;
 		my_zoneX = player->_x / ZONE_SEC;
@@ -130,8 +125,6 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 			zone[my_zoneY][my_zoneX]->ADD(player->_id);
 		}
 
-		player->_x = x;
-		player->_y = y;
 		unordered_set <int> old_vl;
 		{
 			std::shared_lock<std::shared_mutex> lock(player->_vl);
@@ -202,6 +195,9 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 				{
 					Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 					pl->send_remove_object_packet(o_id);
+				}
+				else {
+					NPC* npc = reinterpret_cast<NPC*>(objects[p_id]);
 				}
 			}
 		}
@@ -312,14 +308,22 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 		}
 	}
 	//
-	while (near_list.size() == 0)
+	for (auto& p_id : old_vlist) {
+		if (0 == near_list.count(p_id)) {
+			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			pl->send_remove_object_packet(n_id);
+		}
+	}
+
+
+	if (near_list.size() == 0)
 	{
 		bool before_wake = npc->_n_wake;
 		if (before_wake == 1)
 		{
 			if (!CAS(reinterpret_cast<volatile int*>(&npc->_n_wake), before_wake, 0))
 			{
-				continue;
+
 			}
 			else
 			{
@@ -335,12 +339,7 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 	timer_queue.push(ev);
 	//l_q.unlock();
 
-	for (auto& p_id : old_vlist) {
-		if (0 == near_list.count(p_id)) {
-			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
-			pl->send_remove_object_packet(n_id);
-		}
-	}
+	
 }
 
 
@@ -362,7 +361,7 @@ void WSA_OVER_EX::zone_check(int x, int y, set<int>& z_list)
 	char Zonediagonal_X = 0;
 	char Zonediagonal_Y = 0;
 
-	if (y % ZONE_SEC < VIEW_RANGE)
+	if (y % ZONE_SEC <= VIEW_RANGE)
 	{
 		if (my_zoneY)
 		{
@@ -370,7 +369,7 @@ void WSA_OVER_EX::zone_check(int x, int y, set<int>& z_list)
 			zone[my_zoneY + Zonediagonal_Y][my_zoneX]->Zonelist(z_list);
 		}
 	}
-	else if (ZONE_SEC - (y % ZONE_SEC) < VIEW_RANGE)
+	else if (ZONE_SEC - (y % ZONE_SEC) <= VIEW_RANGE)
 	{
 		if (my_zoneY < ZONE_Y - 1)
 		{
@@ -380,7 +379,7 @@ void WSA_OVER_EX::zone_check(int x, int y, set<int>& z_list)
 	}
 
 
-	if (x % ZONE_SEC < VIEW_RANGE)
+	if (x % ZONE_SEC <= VIEW_RANGE)
 	{
 		if (my_zoneX)
 		{
@@ -388,7 +387,7 @@ void WSA_OVER_EX::zone_check(int x, int y, set<int>& z_list)
 			zone[my_zoneY][my_zoneX + Zonediagonal_X]->Zonelist(z_list);
 		}
 	}
-	else if (ZONE_SEC - (y % ZONE_SEC) < VIEW_RANGE)
+	else if (ZONE_SEC - (x % ZONE_SEC) <= VIEW_RANGE)
 	{
 		if (my_zoneX < ZONE_X - 1)
 		{
