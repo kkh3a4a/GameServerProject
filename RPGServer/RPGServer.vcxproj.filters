@@ -31,6 +31,9 @@
     <Filter Include="소스 파일\Zone">
       <UniqueIdentifier>{e8ca3e3d-598a-4056-8462-52bb1ba3cbbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\NetWork\TimerThread">
+      <UniqueIdentifier>{351077e1-64cc-42f1-a65a-90e4408aac9d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -54,6 +57,9 @@
     <ClCompile Include="Zone.cpp">
       <Filter>소스 파일\Zone</Filter>
     </ClCompile>
+    <ClCompile Include="TimerThread.cpp">
+      <Filter>소스 파일\NetWork\TimerThread</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Object.h">
@@ -76,6 +82,9 @@
     </ClInclude>
     <ClInclude Include="Zone.h">
       <Filter>소스 파일\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="TimerThread.h">
+      <Filter>소스 파일\NetWork\TimerThread</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

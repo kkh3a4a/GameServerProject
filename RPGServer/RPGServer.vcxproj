@@ -132,6 +132,7 @@
     <ClCompile Include="NetWork.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="TimerThread.cpp" />
     <ClCompile Include="WorkThread.cpp" />
     <ClCompile Include="Zone.cpp" />
   </ItemGroup>
@@ -141,6 +142,7 @@
     <ClInclude Include="NetWork.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="TimerThread.h" />
     <ClInclude Include="WorkThread.h" />
     <ClInclude Include="Zone.h" />
   </ItemGroup>

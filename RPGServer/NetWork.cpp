@@ -10,6 +10,9 @@ bool IsNight;
 
 SOCKET g_s_socket, g_c_socket;
 std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
+concurrency::concurrent_priority_queue <EVENT> timer_queue;
+
+
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 
@@ -226,7 +229,7 @@ void WSA_OVER_EX::disconnect(int o_id)	//矫具贸府 救等淀?
 	
 }
 
-void WSA_OVER_EX::do_npc_ai(int n_id)
+void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 {
 }
 
@@ -321,4 +324,8 @@ bool is_NPC(int _id) {
 	if (_id < MAX_USER)
 		return false;
 	return true;
+}
+
+EVENT::EVENT()
+{
 }

@@ -89,11 +89,11 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			delete ex_over;
 			break;
 		}
-		case OP_NPC_AI:
+		case OP_NPC_RANDOMMOVE:
 		{
+			ex_over->do_npc_ramdom_move(static_cast<int>(key));
 
-			ex_over->do_npc_ai(static_cast<int>(key));
-
+			delete ex_over;
 			break;
 		}
 		}
