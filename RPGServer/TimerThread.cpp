@@ -23,7 +23,7 @@ void TimerThread()
 		retry_timer:
 		if (_event._exec_time > chrono::system_clock::now())	//이미 꺼냈는데 다시넣는건 오버헤드 큰거같음
 		{
-			this_thread::sleep_for(_event._exec_time - chrono::system_clock::now());
+			this_thread::sleep_for(1ms);
 			goto retry_timer;
 		}
 		switch (_event._e_type)
@@ -46,3 +46,5 @@ void TimerThread()
 	}
 
 }
+
+

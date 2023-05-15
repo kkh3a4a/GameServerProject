@@ -36,6 +36,27 @@ void initZone()
 	}
 }
 
+void initialize_npc()
+{
+	for (int i = 0; i < MAX_NPC; ++i)
+	{
+		int npc_id = i + MAX_USER;
+		NPC* npc = reinterpret_cast<NPC*>(objects[npc_id]);
+
+		npc->_x = rand() % W_WIDTH;
+		npc->_y = rand() % W_HEIGHT;
+		npc->_state = ST_INGAME;
+		npc->_id = npc_id;
+		npc->_n_wake = 0;
+		sprintf_s(npc->_name, "N%d", npc_id);
+		int my_zoneY, my_zoneX;
+
+		my_zoneY = npc->_y / ZONE_SEC;
+		my_zoneX = npc->_x / ZONE_SEC;
+		zone[my_zoneY][my_zoneX]->ADD(npc->_id);
+	}
+	cout << "NPC_initialize success" << endl;
+}
 
 int main() {
 	initObject();
@@ -57,18 +78,17 @@ int main() {
 	g_c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	g_a_over._iocpop = OP_ACCEPT;
 	AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
-	//
-	//	initialize_npc();
-	//
-	//	thread timer_thread{ do_timer };
+	
+	initialize_npc();
+	thread timer_thread{ TimerThread };
 	vector <thread> worker_threads;
 	int num_threads = std::thread::hardware_concurrency();
 	for (int i = 0; i < num_threads; ++i)
 		worker_threads.emplace_back(worker_thread, g_a_over);
 	for (auto& th : worker_threads)
 		th.join();
-	//
-	//	timer_thread.join();
+	
+	timer_thread.join();
 	closesocket(g_s_socket);
 	WSACleanup();
 }

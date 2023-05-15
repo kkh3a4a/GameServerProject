@@ -52,8 +52,7 @@ void Player::send_add_object_packet(int o_id)
 			return;
 		}
 		_view_list.insert(o_id);
-	}
-	
+	}	
 	SC_ADD_OBJECT_PACKET packet;
 	packet.id = o_id;
 	strcpy_s(packet.name, objects[o_id]->_name);
@@ -66,20 +65,12 @@ void Player::send_add_object_packet(int o_id)
 
 void Player::send_move_packet(int o_id)
 {
-	SC_MOVE_OBJECT_PACKET p;
-	p.id = o_id;
-	p.size = sizeof(SC_MOVE_OBJECT_PACKET);
-	p.type = SC_MOVE_OBJECT;
-	p.x = objects[o_id]->_x;
-	p.y = objects[o_id]->_y;
-	p.move_time = objects[o_id]->_last_move_time;
-	send_packet(&p);
-	/*{
+	{
 		std::shared_lock<std::shared_mutex> lock(_vl);
-		if (_view_list.count(c_id) != 0) {
+		if (_view_list.count(o_id) != 0) {
 			lock.unlock();
 			SC_MOVE_OBJECT_PACKET p;
-			p.id = c_id;
+			p.id = o_id;
 			p.size = sizeof(SC_MOVE_OBJECT_PACKET);
 			p.type = SC_MOVE_OBJECT;
 			p.x = objects[o_id]->_x;
@@ -89,9 +80,9 @@ void Player::send_move_packet(int o_id)
 		}
 		else {
 			lock.unlock();
-			send_add_player_packet(c_id);
+			send_add_object_packet(o_id);
 		}
-	}*/
+	}
 }
 
 void Player::send_remove_object_packet(int o_id)

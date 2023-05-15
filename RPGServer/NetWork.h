@@ -22,7 +22,7 @@ extern SOCKET g_s_socket, g_c_socket;
 extern concurrency::concurrent_priority_queue <class EVENT> timer_queue;
 
 
-enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
+
 enum EVENT_TYPE { EV_RANDOM_MOVE, EV_ATTACK, EV_HEAL };
 
 constexpr int VIEW_RANGE = 6;
@@ -50,6 +50,8 @@ public:
 
 	void processpacket(int client_id, char* packet);
 	void disconnect(int o_id);
+
+	void wake_up_npc(int n_id);
 	void do_npc_ramdom_move(int o_id);
 	void set_accept_over();
 	void zone_check(int x, int y, set<int>&);

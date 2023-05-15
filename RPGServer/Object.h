@@ -1,6 +1,8 @@
 #pragma once
 #include<unordered_set>
 #include<shared_mutex>
+enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
+
 class Object
 {
 public:
@@ -10,6 +12,10 @@ public:
 	int		_id;	
 	int		_last_move_time;
 	char	_name[20]{};
+
+	S_STATE	_state = ST_FREE;
+	std::shared_mutex _s_lock;
+
 	std::unordered_set <int> _view_list;
 	std::shared_mutex _vl;
 

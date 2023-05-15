@@ -51,14 +51,14 @@
     <ClCompile Include="Player.cpp">
       <Filter>소스 파일\Object\Player</Filter>
     </ClCompile>
-    <ClCompile Include="DefaualtNPC.cpp">
-      <Filter>소스 파일\Object\DefaultNPC</Filter>
-    </ClCompile>
     <ClCompile Include="Zone.cpp">
       <Filter>소스 파일\Zone</Filter>
     </ClCompile>
     <ClCompile Include="TimerThread.cpp">
       <Filter>소스 파일\NetWork\TimerThread</Filter>
+    </ClCompile>
+    <ClCompile Include="DefaultNPC.cpp">
+      <Filter>소스 파일\Object\DefaultNPC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

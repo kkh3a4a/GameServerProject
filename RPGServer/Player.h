@@ -6,12 +6,11 @@ class Player : public Object
 public:
 	
 	WSA_OVER_EX _wsa_recv_over;
-	S_STATE	_state = ST_FREE;
 	SOCKET	_socket;
 	int		_prev_size{};
 	char	_packet_buf[BUF_SIZE]{};
 	
-	std::shared_mutex _s_lock;
+
 	Player(int id, S_STATE _state);
 	~Player();
 
