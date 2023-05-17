@@ -45,8 +45,8 @@ void initialize_npc()
 
 		npc->_x = rand() % W_WIDTH;
 		npc->_y = rand() % W_HEIGHT;
-		npc->_x = 49 + i;
-		npc->_y = 49 + i;
+		/*npc->_x = 49 + i;
+		npc->_y = 49 + i;*/
 		npc->_state = ST_INGAME;
 		npc->_id = npc_id;
 		npc->_n_wake = 0;

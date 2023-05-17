@@ -3,7 +3,7 @@ constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 20;
 
 constexpr int MAX_USER = 10000;
-constexpr int MAX_NPC = 20;
+constexpr int MAX_NPC = 200000;
 constexpr int MAXOBJECT = MAX_USER + MAX_NPC;
 
 constexpr int W_WIDTH = 2000;

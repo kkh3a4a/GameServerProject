@@ -46,8 +46,8 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 		player->_x = rand() % W_WIDTH;
 		player->_y = rand() % W_HEIGHT;
 
-		player->_x = 49 + o_id * 1;
-		player->_y = 49 + o_id * 1;
+		/*player->_x = 49 + o_id * 1;
+		player->_y = 49 + o_id * 1;*/
 		int my_zoneY, my_zoneX;
 		my_zoneY = player->_y / ZONE_SEC;
 		my_zoneX = player->_x / ZONE_SEC;
