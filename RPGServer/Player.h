@@ -20,4 +20,5 @@ public:
 	void send_add_object_packet(int o_id);
 	void send_move_packet(int o_id);
 	void send_remove_object_packet(int o_id);
+	void send_chat_packet(int p_id, const char* mess);
 };

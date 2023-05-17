@@ -11,8 +11,6 @@
 using namespace std;
 
 
-
-
 WSA_OVER_EX g_a_over;
 void initObject()
 {
@@ -56,6 +54,20 @@ void initialize_npc()
 		my_zoneY = npc->_y / ZONE_SEC;
 		my_zoneX = npc->_x / ZONE_SEC;
 		zone[my_zoneY][my_zoneX]->ADD(npc->_id);
+
+		auto L = npc->_L = luaL_newstate();
+		luaL_openlibs(L);
+		luaL_loadfile(L, "npc.lua");
+		lua_pcall(L, 0, 0, 0);
+
+		lua_getglobal(L, "set_uid");
+		lua_pushnumber(L, i);
+		lua_pcall(L, 1, 0, 0);
+		// lua_pop(L, 1);// eliminate set_uid from stack after call
+
+		lua_register(L, "API_SendMessage", API_SendMessage);
+		lua_register(L, "API_get_x", API_get_x);
+		lua_register(L, "API_get_y", API_get_y);
 	}
 	cout << "NPC_initialize success" << endl;
 }

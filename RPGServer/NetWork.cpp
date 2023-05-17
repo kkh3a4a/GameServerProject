@@ -435,6 +435,39 @@ bool is_NPC(int _id) {
 	return true;
 }
 
+int API_get_x(lua_State* L)
+{
+	int user_id =
+		(int)lua_tointeger(L, -1);
+	lua_pop(L, 2);
+	int x = objects[user_id]->_x;
+	lua_pushnumber(L, x);
+	return 1;
+}
+
+int API_get_y(lua_State* L)
+{
+	int user_id =
+		(int)lua_tointeger(L, -1);
+	lua_pop(L, 2);
+	int y = objects[user_id]->_y;
+	lua_pushnumber(L, y);
+	return 1;
+}
+
+int API_SendMessage(lua_State* L)
+{
+	int my_id = (int)lua_tointeger(L, -3);
+	int user_id = (int)lua_tointeger(L, -2);
+	char* mess = (char*)lua_tostring(L, -1);
+
+	lua_pop(L, 4);
+	Player* player = reinterpret_cast<Player*>(objects[my_id]);
+	player->send_chat_packet(my_id, mess);
+	return 0;
+}
+
+
 EVENT::EVENT()
 {
 }

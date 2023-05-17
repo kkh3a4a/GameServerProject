@@ -10,7 +10,9 @@
 #include"Object.h"
 #include"TimerThread.h"
 #include <concurrent_priority_queue.h>
+#include"include/lua.hpp"
 
+#pragma comment(lib, "lua54.lib")
 //#include"Zone.h"
 
 using namespace std;
@@ -57,14 +59,17 @@ public:
 	void zone_check(int x, int y, set<int>&);
 };
 
-
-
 int get_new_player_id();
-
 
 bool can_see(int p1, int p2);
 
 bool is_NPC(int _id);
+
+int API_get_x(lua_State* L);
+
+int API_get_y(lua_State* L);
+
+int API_SendMessage(lua_State* L);
 
 class EVENT
 {

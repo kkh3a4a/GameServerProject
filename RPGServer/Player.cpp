@@ -102,3 +102,13 @@ void Player::send_remove_object_packet(int o_id)
 	p.type = SC_REMOVE_OBJECT;
 	send_packet(&p);
 }
+
+void Player::send_chat_packet(int p_id, const char* mess)
+{
+	SC_CHAT_PACKET packet;
+	packet.id = p_id;
+	packet.size = sizeof(packet);
+	packet.type = SC_CHAT;
+	strcpy_s(packet.mess, mess);
+	send_packet(&packet);
+}
