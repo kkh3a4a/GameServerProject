@@ -1,6 +1,7 @@
 #include"WorkThread.h"
 #include"Player.h"
 #include"Zone.h"
+#include"DefaultNPC.h"
 using namespace std;
 
 
@@ -92,6 +93,26 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		case OP_NPC_RANDOMMOVE:
 		{
 			ex_over->do_npc_ramdom_move(static_cast<int>(key));
+
+			delete ex_over;
+			break;
+		}
+		case OP_AI_HELLO:
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			npc->_lua_lock.lock();
+			auto L = npc->_L;
+			lua_getglobal(L, "event_player_move");
+			lua_pushnumber(L, ex_over->_causeId);
+			lua_pcall(L, 1, 0, 0);
+			lua_pop(L, 1);
+			npc->_lua_lock.unlock();
+			delete ex_over;
+			
+			break;
+		}
+		case OP_AI_BYE:
+		{
 
 			delete ex_over;
 			break;

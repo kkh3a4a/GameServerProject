@@ -36,7 +36,9 @@ enum IOCPOP
 	OP_RECV,
 	OP_SEND,
 	OP_ACCEPT,
-	OP_NPC_RANDOMMOVE
+	OP_NPC_RANDOMMOVE,
+	OP_AI_HELLO,
+	OP_AI_BYE
 };
 class WSA_OVER_EX {
 public:
@@ -44,7 +46,8 @@ public:
 	IOCPOP			_iocpop;
 	WSABUF			_wsabuf;
 	EVENT_TYPE		_e_type;
-	char	_buf[BUF_SIZE];
+	int				_causeId;
+	char			_buf[BUF_SIZE]{};
 
 public:
 	WSA_OVER_EX();

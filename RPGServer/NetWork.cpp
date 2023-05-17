@@ -20,7 +20,11 @@ concurrency::concurrent_priority_queue <EVENT> timer_queue;
 
 WSA_OVER_EX::WSA_OVER_EX()
 {
-	return;
+	ZeroMemory(&_wsaover, sizeof(_wsaover));
+	_wsabuf.len = BUF_SIZE;
+	_wsabuf.buf = _buf;
+	_iocpop = OP_RECV;
+	_e_type = EV_ATTACK;
 }
 
 WSA_OVER_EX::WSA_OVER_EX(IOCPOP iocpop, unsigned char byte, void* buf)
@@ -168,6 +172,7 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 			else
 			{
 				NPC* nl = reinterpret_cast<NPC*>(objects[o]);
+				
 				bool before_wake = nl->_n_wake;
 				if (old_vl.count(o) == 0) {
 					nl->add_objects(o_id);
@@ -175,6 +180,10 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 				}
 				else {
 					player->send_move_packet(o);
+					WSA_OVER_EX* w_ex = new WSA_OVER_EX;
+					w_ex->_causeId = o_id;
+					w_ex->_iocpop = OP_AI_HELLO;
+					PostQueuedCompletionStatus(h_iocp, 1, o, &w_ex->_wsaover);
 				}
 				if (before_wake == 0)
 				{
@@ -462,7 +471,7 @@ int API_SendMessage(lua_State* L)
 	char* mess = (char*)lua_tostring(L, -1);
 
 	lua_pop(L, 4);
-	Player* player = reinterpret_cast<Player*>(objects[my_id]);
+	Player* player = reinterpret_cast<Player*>(objects[user_id]);
 	player->send_chat_packet(my_id, mess);
 	return 0;
 }

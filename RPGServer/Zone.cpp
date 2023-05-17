@@ -75,7 +75,7 @@ void ZoneManager::REMOVE(int id)
 				//r_lock.unlock();
 				curr->unlock();
 				prev->unlock();
-				//delete curr;
+				//delete curr;					//추후 지워주도록 하자
 				//removeObj(curr);
 				return;
 			}

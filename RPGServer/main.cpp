@@ -61,7 +61,7 @@ void initialize_npc()
 		lua_pcall(L, 0, 0, 0);
 
 		lua_getglobal(L, "set_uid");
-		lua_pushnumber(L, i);
+		lua_pushnumber(L, npc_id);
 		lua_pcall(L, 1, 0, 0);
 		// lua_pop(L, 1);// eliminate set_uid from stack after call
 
