@@ -10,7 +10,7 @@ public:
 
 	int		_x, _y, _z;		//location
 	int		_id;	
-	int		_last_move_time;
+	int		_last_move_time;	
 	char	_name[20]{};
 
 	S_STATE	_state = ST_FREE;

@@ -9,5 +9,6 @@ public:
 	void add_objects(int o_id);
 
 	lua_State* _L;
-	mutex _lua_lock;
+	std::mutex _lua_lock;
+	chrono::system_clock::time_point _last_hello_time;
 };

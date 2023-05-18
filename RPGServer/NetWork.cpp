@@ -316,6 +316,21 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 			pl->send_add_object_packet(n_id);
 		}
 	}
+	npc->_lua_lock.lock();
+	auto L = npc->_L;
+	if (L != nullptr)
+	{
+		lua_getglobal(L, "event_three_move");
+		int status = lua_pcall(L, 0, 0, 0);
+		if (status != LUA_OK) {
+			const char* errorMessage = lua_tostring(L, -1);
+			printf("Lua error: %s\n", errorMessage);
+			lua_pop(L, 1); // 오류 메시지를 스택에서 제거
+		}
+		lua_pop(L, 1);
+
+	}
+	npc->_lua_lock.unlock();
 	//
 	for (auto& p_id : old_vlist) {
 		if (0 == near_list.count(p_id)) {
@@ -342,6 +357,8 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 		else
 			return;
 	}
+
+
 
 	EVENT ev{ n_id, EV_RANDOM_MOVE,chrono::system_clock::now() + 1s };
 	//l_q.lock();
@@ -469,7 +486,6 @@ int API_SendMessage(lua_State* L)
 	int my_id = (int)lua_tointeger(L, -3);
 	int user_id = (int)lua_tointeger(L, -2);
 	char* mess = (char*)lua_tostring(L, -1);
-
 	lua_pop(L, 4);
 	Player* player = reinterpret_cast<Player*>(objects[user_id]);
 	player->send_chat_packet(my_id, mess);

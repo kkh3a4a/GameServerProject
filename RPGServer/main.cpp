@@ -48,6 +48,7 @@ void initialize_npc()
 		npc->_state = ST_INGAME;
 		npc->_id = npc_id;
 		npc->_n_wake = 0;
+		//npc->_last_hello_time = chrono::system_clock::now();
 		sprintf_s(npc->_name, "N%d", npc_id);
 		int my_zoneY, my_zoneX;
 
@@ -57,13 +58,13 @@ void initialize_npc()
 
 		auto L = npc->_L = luaL_newstate();
 		luaL_openlibs(L);
-		luaL_loadfile(L, "npc.lua");
+		int ret = luaL_loadfile(L, "npc.lua");
 		lua_pcall(L, 0, 0, 0);
 
 		lua_getglobal(L, "set_uid");
 		lua_pushnumber(L, npc_id);
 		lua_pcall(L, 1, 0, 0);
-		// lua_pop(L, 1);// eliminate set_uid from stack after call
+		lua_pop(L, 1);// eliminate set_uid from stack after call
 
 		lua_register(L, "API_SendMessage", API_SendMessage);
 		lua_register(L, "API_get_x", API_get_x);
