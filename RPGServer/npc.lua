@@ -20,16 +20,12 @@ function event_player_move(player)
          API_SendMessage(myid, player, "Hello");
       end
    end
-local traceback = debug.traceback()
-print(traceback)
 end
 
 
-function event_three_move( )
+function event_three_move()
     set_countmove(countmove + 1)
     if(countmove == 4) then
         API_SendMessage(myid, player, "Bye");
     end
-    local traceback = debug.traceback()
-    print(traceback)
 end

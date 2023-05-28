@@ -317,17 +317,17 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 		}
 	}
 	npc->_lua_lock.lock();
-	auto L = npc->_L;
+	lua_State* L = npc->_L;
 	if (L != nullptr)
 	{
 		lua_getglobal(L, "event_three_move");
 		int status = lua_pcall(L, 0, 0, 0);
-		if (status != LUA_OK) {
-			const char* errorMessage = lua_tostring(L, -1);
-			printf("Lua error: %s\n", errorMessage);
-			lua_pop(L, 1); // 오류 메시지를 스택에서 제거
-		}
-		lua_pop(L, 1);
+		//if (status != LUA_OK) {
+		//	const char* errorMessage = lua_tostring(L, -1);
+		//	//printf("Lua error: %s\n", errorMessage);
+		//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
+		//}
+		//lua_pop(L, 1);
 
 	}
 	npc->_lua_lock.unlock();
@@ -376,7 +376,7 @@ void WSA_OVER_EX::set_accept_over()
 	_iocpop = IOCPOP::OP_ACCEPT;
 }
 
-void WSA_OVER_EX::zone_check(int x, int y, set<int>& z_list)
+void zone_check(int x, int y, set<int>& z_list)
 {
 	int my_zoneY, my_zoneX;
 	my_zoneY = y / ZONE_SEC;
@@ -487,8 +487,15 @@ int API_SendMessage(lua_State* L)
 	int user_id = (int)lua_tointeger(L, -2);
 	char* mess = (char*)lua_tostring(L, -1);
 	lua_pop(L, 4);
-	Player* player = reinterpret_cast<Player*>(objects[user_id]);
-	player->send_chat_packet(my_id, mess);
+	set<int> z_list;
+	// 수정사항 : 시야 내에있는 모든 플레이어에게 chat을 보내게 구현하였습니다.
+	zone_check(objects[my_id]->_x, objects[my_id]->_y, z_list);
+	for (auto& p_id : z_list) {
+		if (p_id >= MAX_USER)
+			break;
+		Player* player = reinterpret_cast<Player*>(objects[p_id]);
+		player->send_chat_packet(my_id, mess);
+	}
 	return 0;
 }
 

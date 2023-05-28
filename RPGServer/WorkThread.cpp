@@ -101,20 +101,19 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		{
 			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
 			npc->_lua_lock.lock();
-			auto L = npc->_L;
+			lua_State* L = npc->_L;
 			if(L != nullptr)
 			{
 				lua_getglobal(L, "event_player_move");
-				lua_Debug l_d;
 				lua_pushnumber(L, ex_over->_causeId);
 				int status = lua_pcall(L, 1, 0, 0);
-				if (status != LUA_OK) {
-					const char* errorMessage = lua_tostring(L, -1);
-					printf("Lua error: %s\n", errorMessage);
-					lua_pop(L, 1); // 오류 메시지를 스택에서 제거
-				}
+				//if (status != LUA_OK) {
+				//	const char* errorMessage = lua_tostring(L, -1);
+				//	printf("Lua error: %s\n", errorMessage);
+				//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
+				//}
 
-				lua_pop(L, 1);
+				//lua_pop(L, 1);
 			}
 			npc->_lua_lock.unlock();
 

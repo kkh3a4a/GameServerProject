@@ -59,7 +59,7 @@ public:
 	void wake_up_npc(int n_id);
 	void do_npc_ramdom_move(int o_id);
 	void set_accept_over();
-	void zone_check(int x, int y, set<int>&);
+	
 };
 
 int get_new_player_id();
@@ -73,7 +73,7 @@ int API_get_x(lua_State* L);
 int API_get_y(lua_State* L);
 
 int API_SendMessage(lua_State* L);
-
+void zone_check(int x, int y, set<int>&);
 class EVENT
 {
 public:
