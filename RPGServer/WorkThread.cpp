@@ -35,7 +35,6 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			int p_id = get_new_player_id();
 			if (p_id != -1)
 			{
-
 				Player* player = reinterpret_cast<Player*>(objects[p_id]);
 				{
 					std::unique_lock<std::shared_mutex> lock(player->_s_lock);

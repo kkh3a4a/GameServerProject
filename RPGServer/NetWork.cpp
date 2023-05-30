@@ -13,6 +13,10 @@ SOCKET g_s_socket, g_c_socket;
 std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
 concurrency::concurrent_priority_queue <EVENT> timer_queue;
 
+SQLHENV henv;
+SQLHDBC hdbc;
+SQLHSTMT hstmt = 0;
+SQLRETURN retcode;
 
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
@@ -502,4 +506,19 @@ int API_SendMessage(lua_State* L)
 
 EVENT::EVENT()
 {
+}
+
+
+
+
+void show_DB_error(SQLHSTMT hstmt) {
+	std::wcout.imbue(std::locale("korean"));
+	SQLWCHAR sqlState[6];
+	SQLINTEGER nativeErr;
+	SQLWCHAR errMsg[SQL_MAX_MESSAGE_LENGTH / sizeof(SQLWCHAR)];
+	SQLSMALLINT msgLen;
+
+	SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlState, &nativeErr, (errMsg), SQL_MAX_MESSAGE_LENGTH / sizeof(SQLWCHAR), &msgLen);
+	wcout << (L"SQL error : %ls\n", errMsg);
+	wcout << endl;
 }
