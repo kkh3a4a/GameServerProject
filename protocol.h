@@ -1,5 +1,4 @@
 constexpr int PORT_NUM = 4000;
-constexpr int DB_PORT_NUM = 5000;
 constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 100;
@@ -15,7 +14,7 @@ constexpr int ZONE_SEC = 50;
 constexpr int ZONE_X = (W_WIDTH / ZONE_SEC);
 constexpr int ZONE_Y = (W_HEIGHT / ZONE_SEC);
 
-// Packet ID
+/////////////////////// Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 constexpr char CS_CHAT = 2;
@@ -31,8 +30,7 @@ constexpr char SC_CHAT = 6;
 constexpr char SC_LOGIN_OK = 7;
 constexpr char SC_LOGIN_FAIL = 8;
 constexpr char SC_STAT_CHANGE = 9;
-
-#define DB_SERVER_ADDR "127.0.0.1"
+////////////////////////// ~49 ±îÁö
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {

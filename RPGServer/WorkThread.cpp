@@ -121,6 +121,32 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			delete ex_over;
 			break;
 		}
+		case DB_RECV:
+		{
+			int remain_data = num_bytes + DB_prev_size;
+			char* p = ex_over->_buf;
+			while (remain_data > 0) {
+				int packet_size = p[0];
+				if (packet_size <= remain_data) {
+					ex_over->processpacket(static_cast<int>(key), p);
+					p = p + packet_size;
+					remain_data = remain_data - packet_size;
+				}
+				else break;
+			}
+
+			DB_prev_size = remain_data;
+			if (remain_data > 0) {
+				memcpy(ex_over->_buf, p, remain_data);
+			}
+			DB_do_recv();
+			break;
+		}
+		case DB_SEND:
+		{
+			delete ex_over;
+			break;
+		}
 		}
 	}
 }

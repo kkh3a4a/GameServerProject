@@ -13,7 +13,8 @@ SOCKET g_s_socket, g_c_socket;
 std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
 concurrency::concurrent_priority_queue <EVENT> timer_queue;
 SOCKET DB_socket;
-
+WSA_OVER_EX DB_wsa_recv_over;
+int DB_prev_size = 0;
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 
@@ -210,6 +211,12 @@ void WSA_OVER_EX::processpacket(int o_id, char* pk)
 				}
 			}
 		}
+		break;
+	}
+	case DS_PLAYER_LOGIN:
+	{
+		DS_PLAYER_LOGIN_PACKET* packet = reinterpret_cast<DS_PLAYER_LOGIN_PACKET*>(pk);
+		cout << "LOGIN : " << packet->id << endl;
 		break;
 	}
 	default:
@@ -504,6 +511,30 @@ EVENT::EVENT()
 {
 }
 
+void DB_send_packet(void* pk)
+{
+	char* buf = reinterpret_cast<char*>(pk);
+	WSA_OVER_EX* _wsa_send_over = new WSA_OVER_EX(DB_SEND, buf[0], pk);
+
+	WSASend(DB_socket, &_wsa_send_over->_wsabuf, 1, NULL, 0, &_wsa_send_over->_wsaover, NULL);
+}
 
 
+void DB_player_login(int id) {
+	SD_PLAYER_LOGIN_PACKET packet;
+	packet.id = id;
+	packet.size = sizeof(packet);
+	packet.type = SD_PLAYER_LOGIN;
+	DB_send_packet(&packet);
 
+}
+
+void DB_do_recv()
+{
+	DWORD recv_flag = 0;
+	memset(&DB_wsa_recv_over._wsaover, 0, sizeof(DB_wsa_recv_over._wsaover));
+	DB_wsa_recv_over._wsabuf.len = DB_BUF_SIZE - DB_prev_size;
+	DB_wsa_recv_over._wsabuf.buf = DB_wsa_recv_over._buf + DB_prev_size;
+	DB_wsa_recv_over._iocpop = DB_RECV;
+	WSARecv(DB_socket, &DB_wsa_recv_over._wsabuf, 1, 0, &recv_flag, &DB_wsa_recv_over._wsaover, 0);
+}

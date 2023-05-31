@@ -133,7 +133,7 @@
     <ClCompile Include="WorkThread.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\protocol.h" />
+    <ClInclude Include="..\DBprotocol.h" />
     <ClInclude Include="NetWork.h" />
     <ClInclude Include="WorkThread.h" />
   </ItemGroup>

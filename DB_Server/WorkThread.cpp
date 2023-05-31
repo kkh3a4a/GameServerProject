@@ -5,7 +5,8 @@ using namespace std;
 
 void worker_thread(WSA_OVER_EX g_a_over)
 {
-	while (true) {
+	while (true) 
+	{
 		DWORD num_bytes;
 		ULONG_PTR key;
 		WSAOVERLAPPED* over = nullptr;
@@ -15,7 +16,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		if (FALSE == ret) {
 			if (ex_over->_iocpop == OP_ACCEPT) cout << "Accept Error";
 			else {
-				cout << "GQCS Error on client[" << key << "]\n";
+				cout << "server[" << key << "]\n";
 				ex_over->disconnect(static_cast<int>(key));
 				if (ex_over->_iocpop == OP_SEND) delete ex_over;
 				continue;
@@ -30,14 +31,31 @@ void worker_thread(WSA_OVER_EX g_a_over)
 
 		switch (ex_over->_iocpop) {
 		case OP_ACCEPT: {
-			
-			cout << "ACCEPT" << endl;
-			ZeroMemory(&g_a_over._wsaover, sizeof(g_a_over._wsaover));
-			int addr_size = sizeof(SOCKADDR_IN);
-			AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
+			static int key = 0;
+			CreateIoCompletionPort(reinterpret_cast<HANDLE>(SV_socket), h_iocp, key, 0);
+			key++;
+			do_recv();
 			break;
 		}
+
 		case OP_RECV: {
+			int remain_data = num_bytes + _prev_size;
+			char* p = ex_over->_buf;
+			while (remain_data > 0) {
+				int packet_size = p[0];
+				if (packet_size <= remain_data) {
+					ex_over->processpacket(static_cast<int>(key), p);
+					p = p + packet_size;
+					remain_data = remain_data - packet_size;
+				}
+				else break;
+			}
+
+			_prev_size = remain_data;
+			if (remain_data > 0) {
+				memcpy(ex_over->_buf, p, remain_data);
+			}
+			do_recv();
 			break;
 		}
 		case OP_SEND:

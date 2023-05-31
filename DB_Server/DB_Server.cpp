@@ -9,7 +9,7 @@
 using namespace std;
 
 
-SQLCHAR szName[NAME_SIZE];
+SQLCHAR szName[DB_NAME_SIZE];
 SQLINTEGER szId, szExp;
 SQLLEN cbName = 0, cbID = 0, cbExp = 0;
 WSA_OVER_EX g_a_over;
@@ -46,7 +46,7 @@ void DB_connect()
 					if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
 						// Bind columns 1, 2, and 3  
 						retcode = SQLBindCol(hstmt, 1, SQL_INTEGER, &szId, 12, &cbID);
-						retcode = SQLBindCol(hstmt, 2, SQL_C_CHAR, szName, NAME_SIZE, &cbName);
+						retcode = SQLBindCol(hstmt, 2, SQL_C_CHAR, szName, DB_NAME_SIZE, &cbName);
 						retcode = SQLBindCol(hstmt, 3, SQL_INTEGER, &szExp, 12, &cbExp);
 
 						// Fetch and print each row of data. On an error, display a message and exit. 
@@ -101,19 +101,19 @@ int main()
 		int errorcode = WSAGetLastError();
 		error_display("WSAStartup : ", errorcode);
 	}
-	g_s_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	DB_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	SOCKADDR_IN server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(DB_PORT_NUM);
 	server_addr.sin_addr.S_un.S_addr = INADDR_ANY;
-	ret = bind(g_s_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
+	ret = bind(DB_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
 	if (ret != 0)
 	{
 		int errorcode = WSAGetLastError();
 		error_display("WSAStartup : ", errorcode);
 	}
-	ret = listen(g_s_socket, SOMAXCONN);
+	ret = listen(DB_socket, SOMAXCONN);
 	if (ret != 0)
 	{
 		int errorcode = WSAGetLastError();
@@ -122,10 +122,10 @@ int main()
 	SOCKADDR_IN cl_addr;
 	int addr_size = sizeof(cl_addr);
 	h_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
-	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_s_socket), h_iocp, 999999, 0);
-	g_c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(DB_socket), h_iocp, 999999, 0);
+	SV_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	g_a_over._iocpop = OP_ACCEPT;
-	ret = AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
+	ret = AcceptEx(DB_socket, SV_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
 	if (ret != 0)
 	{
 		int errorcode = WSAGetLastError();

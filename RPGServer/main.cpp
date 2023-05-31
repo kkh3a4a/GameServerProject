@@ -88,7 +88,12 @@ void connect_DB() {
 		int errorcode = WSAGetLastError();
 		cout << "DBconnect Errorcode : " << errorcode << endl;;
 	}
-	cout << "DBconnect" << endl;;
+	cout << "DBconnect" << endl;
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(DB_socket), h_iocp, 1234567, 0);
+	DB_player_login(123);
+	DB_player_login(456);
+	DB_do_recv();
+	
 }
 
 
