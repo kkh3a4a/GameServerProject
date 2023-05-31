@@ -75,81 +75,20 @@ void initialize_npc()
 }
 
 void connect_DB() {
-	SQLRETURN retcode;
-	SQLCHAR szName[NAME_SIZE];
-	SQLINTEGER szId, szExp;
-	SQLLEN cbName = 0, cbID = 0, cbExp = 0;
+	DB_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+	SOCKADDR_IN DBserver_addr;
+	ZeroMemory(&DBserver_addr, sizeof(DBserver_addr));
+	DBserver_addr.sin_family = AF_INET;
+	DBserver_addr.sin_port = htons(DB_PORT_NUM);
+	inet_pton(AF_INET, DB_SERVER_ADDR, &DBserver_addr.sin_addr);
+	int ret = connect(DB_socket, reinterpret_cast<sockaddr*>(&DBserver_addr), sizeof(DBserver_addr));
 
-
-
-	retcode = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
-
-	// Set the ODBC version environment attribute  
-	if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-		retcode = SQLSetEnvAttr(henv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER*)SQL_OV_ODBC3, 0);
-
-		// Allocate connection handle  
-		if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-			retcode = SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc);
-
-			// Set login timeout to 5 seconds  
-			if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-				SQLSetConnectAttr(hdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER)5, 0);
-
-				// Connect to data source  
-			   //SQLConnect(hdbc, (SQLWCHAR*)L"DB_Master", SQL_NTS, (SQLWCHAR*)NULL, 0, NULL, 0);
-				retcode = SQLConnect(hdbc, (SQLWCHAR*)L"DB_GameServerProject", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS);
-				// Allocate statement handle  
-				if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-					retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
-
-					// DB SELECT 함수 실행 
-					//retcode = SQLExecDirect(hstmt, (SQLWCHAR*)L"EXEC over_exp 30000", SQL_NTS);
-					//retcode = SQLExecDirect(hstmt, (SQLWCHAR*)L"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'user_info'", SQL_NTS);
-					retcode = SQLExecDirect(hstmt, (SQLWCHAR*)L"SELECT user_id, user_name, user_exp FROM user_info", SQL_NTS);
-					if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-						// Bind columns 1, 2, and 3  
-						retcode = SQLBindCol(hstmt, 1, SQL_INTEGER, &szId, 12, &cbID);
-						retcode = SQLBindCol(hstmt, 2, SQL_C_CHAR, szName, NAME_SIZE, &cbName);
-						retcode = SQLBindCol(hstmt, 3, SQL_INTEGER, &szExp, 12, &cbExp);
-
-						// Fetch and print each row of data. On an error, display a message and exit. 
-						cout << "test DB" << endl;
-						for (int i = 0; ; i++) {
-							retcode = SQLFetch(hstmt);  // 데이터 해석
-							if (retcode == SQL_ERROR)
-								cout << "Fetch error" << endl;
-							if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO)
-							{
-								wcout << i + 1 << L" : " << szId << L" " << reinterpret_cast<char*>(szName) << L" " << szExp << endl;
-							}
-							else
-								break;
-						}
-					}
-					else
-					{
-						show_DB_error(hstmt);
-					}
-
-					// Process data  
-					if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-						SQLCancel(hstmt);
-						SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-					}
-
-					//SQLDisconnect(hdbc);
-				}
-
-				//SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-			}
-		}
-		//SQLFreeHandle(SQL_HANDLE_ENV, henv);
+	if (ret != 0)
+	{
+		int errorcode = WSAGetLastError();
+		cout << "DBconnect Errorcode : " << errorcode << endl;;
 	}
-	/*retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
-	retcode = SQLExecDirect(hstmt, (SQLWCHAR*)L"SELECT user_id, user_exp FROM user_info", SQL_NTS);*/
-	
-	cout << "connect DB" << endl;
+	cout << "DBconnect" << endl;;
 }
 
 

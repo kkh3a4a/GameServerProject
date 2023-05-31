@@ -11,7 +11,7 @@
 #include"TimerThread.h"
 #include <concurrent_priority_queue.h>
 #include"include/lua.hpp"
-#include <sqlext.h>  
+
 
 #pragma comment(lib, "lua54.lib")
 //#include"Zone.h"
@@ -25,10 +25,7 @@ extern SOCKET g_s_socket, g_c_socket;
 extern concurrency::concurrent_priority_queue <class EVENT> timer_queue;
 
 /////DB/////
-extern  SQLHENV henv;
-extern SQLHDBC hdbc;
-extern SQLHSTMT hstmt;
-extern SQLRETURN retcode;
+extern SOCKET DB_socket;
 ////////////
 
 enum EVENT_TYPE { EV_RANDOM_MOVE, EV_ATTACK, EV_HEAL };
@@ -100,4 +97,3 @@ public:
 
 
 
-void show_DB_error(SQLHSTMT hstmt);
