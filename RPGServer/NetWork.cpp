@@ -28,7 +28,7 @@ WSA_OVER_EX::WSA_OVER_EX()
 	_e_type = EV_ATTACK;
 }
 
-WSA_OVER_EX::WSA_OVER_EX(IOCPOP iocpop, unsigned char byte, void* buf)
+WSA_OVER_EX::WSA_OVER_EX(IOCPOP iocpop, unsigned short byte, void* buf)
 {
 	ZeroMemory(&_wsaover, sizeof(_wsaover));
 	_iocpop = iocpop;
@@ -36,9 +36,10 @@ WSA_OVER_EX::WSA_OVER_EX(IOCPOP iocpop, unsigned char byte, void* buf)
 	_wsabuf.len = byte;
 }
 
-void WSA_OVER_EX::processpacket(int o_id, char* pk)
+void WSA_OVER_EX::processpacket(int o_id, void* pk)
 {
-	unsigned char packet_type = pk[1];
+	char* packet_data = static_cast<char*>(pk);
+	unsigned char packet_type = packet_data[2];
 
 
 

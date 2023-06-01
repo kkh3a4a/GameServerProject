@@ -11,8 +11,8 @@ using namespace std;
 #pragma comment (lib, "winmm.lib")
 #pragma comment (lib, "ws2_32.lib")
 
-#include "../protocol.h"
-
+//#include "../protocol.h"
+#include "../protocol_2023.h"
 sf::TcpSocket s_socket;
 
 constexpr auto SCREEN_WIDTH = 16;
@@ -140,7 +140,7 @@ void client_finish()
 void ProcessPacket(char* ptr)
 {
 	static bool first_time = true;
-	switch (ptr[1])
+	switch (static_cast<char>(ptr[2]))
 	{
 	case SC_LOGIN_INFO:
 	{
@@ -222,23 +222,29 @@ void ProcessPacket(char* ptr)
 		break;
 	}
 	default:
-		printf("Unknown PACKET type [%d]\n", ptr[1]);
+		printf("Unknown PACKET type [%d]\n", ptr[2]);
 	}
 }
 
-void process_data(char* net_buf, size_t io_byte)
+void process_data(void* net_buf, size_t io_byte)
 {
-	char* ptr = net_buf;
+	char* ptr = static_cast<char*>(net_buf);
+	unsigned short* ptr_size = reinterpret_cast<unsigned short*>(net_buf);
 	static size_t in_packet_size = 0;
 	static size_t saved_packet_size = 0;
 	static char packet_buffer[BUF_SIZE];
 
 	while (0 != io_byte) {
-		if (0 == in_packet_size) in_packet_size = ptr[0];
+		if (0 == in_packet_size) 
+		{
+			in_packet_size = ptr_size[0];
+		}
 		if (io_byte + saved_packet_size >= in_packet_size) {
 			memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
 			ProcessPacket(packet_buffer);
+			
 			ptr += in_packet_size - saved_packet_size;
+			ptr_size = reinterpret_cast<unsigned short*>(ptr);
 			io_byte -= in_packet_size - saved_packet_size;
 			in_packet_size = 0;
 			saved_packet_size = 0;
@@ -289,7 +295,7 @@ void client_main()
 	for (auto& pl : players) pl.second.draw();
 	sf::Text text;
 	text.setFont(g_font);
-	char buf[100];
+	char buf[200];
 	sprintf_s(buf, "(%d, %d)", avatar.m_x, avatar.m_y);
 	text.setString(buf);
 	g_window->draw(text);
@@ -297,7 +303,7 @@ void client_main()
 
 void send_packet(void* packet)
 {
-	unsigned char* p = reinterpret_cast<unsigned char*>(packet);
+	unsigned short* p = reinterpret_cast<unsigned short*>(packet);
 	size_t sent = 0;
 	s_socket.send(packet, p[0], sent);
 }

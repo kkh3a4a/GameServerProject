@@ -15,8 +15,9 @@ Player::Player(int id, S_STATE state)
 void Player::send_packet(void* packet)
 {
 	char* buf = reinterpret_cast<char*>(packet);
-
-	WSA_OVER_EX* _wsa_send_over = new WSA_OVER_EX(OP_SEND, buf[0], packet);
+	unsigned short* buf_size = reinterpret_cast<unsigned short*>(packet);
+	WSA_OVER_EX * _wsa_send_over = new WSA_OVER_EX(OP_SEND, buf_size[0], packet);
+	
 	int ret = WSASend(_socket, &_wsa_send_over->_wsabuf, 1, NULL, 0, &_wsa_send_over->_wsaover, NULL);
 }
 

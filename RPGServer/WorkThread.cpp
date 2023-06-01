@@ -65,7 +65,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 
 			Player* player = reinterpret_cast<Player*>(objects[key]);
 			int remain_data = num_bytes + player->_prev_size;
-			char* p = ex_over->_buf;
+			short* p = reinterpret_cast<short*>(ex_over->_buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
 				if (packet_size <= remain_data) {
@@ -117,7 +117,6 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		}
 		case OP_AI_BYE:
 		{
-
 			delete ex_over;
 			break;
 		}

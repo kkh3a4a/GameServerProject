@@ -117,7 +117,7 @@ int main() {
 	g_c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	g_a_over._iocpop = OP_ACCEPT;
 	AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
-	connect_DB();
+	//connect_DB();
 	initialize_npc();
 	thread timer_thread{ TimerThread };
 	vector <thread> worker_threads;
