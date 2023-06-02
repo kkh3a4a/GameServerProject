@@ -214,6 +214,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		}
 		break;
 	}
+	case CS_ATTACK:
+	{
+		CS_ATTACK_PACKET* packet = reinterpret_cast<CS_ATTACK_PACKET*>(pk);
+		cout << o_id << "is Attack" << endl;
+		break;
+	}
 	case DS_PLAYER_LOGIN:
 	{
 		DS_PLAYER_LOGIN_PACKET* packet = reinterpret_cast<DS_PLAYER_LOGIN_PACKET*>(pk);

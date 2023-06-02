@@ -50,6 +50,11 @@ struct CS_CHAT_PACKET {
 	char	mess[CHAT_SIZE];
 };
 
+struct CS_ATTACK_PACKET {
+	unsigned short size;			
+	char	type;
+	char	mess[CHAT_SIZE];
+};
 struct CS_TELEPORT_PACKET {
 	unsigned short size;
 	char	type;

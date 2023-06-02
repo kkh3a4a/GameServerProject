@@ -18,7 +18,7 @@ sf::TcpSocket s_socket;
 constexpr auto SCREEN_WIDTH = 16;
 constexpr auto SCREEN_HEIGHT = 16;
 
-constexpr auto TILE_WIDTH = 65;
+constexpr auto TILE_WIDTH = 40;
 constexpr auto WINDOW_WIDTH = SCREEN_WIDTH * TILE_WIDTH;   // size of window
 constexpr auto WINDOW_HEIGHT = SCREEN_WIDTH * TILE_WIDTH;
 
@@ -44,6 +44,7 @@ public:
 	OBJECT(sf::Texture& t, int x, int y, int x2, int y2) {
 		m_showing = false;
 		m_sprite.setTexture(t);
+		//m_sprite.setScale(0.5f, 0.5f);
 		m_sprite.setTextureRect(sf::IntRect(x, y, x2, y2));
 		set_name("NONAME");
 		m_mess_end_time = chrono::system_clock::now();
@@ -74,17 +75,17 @@ public:
 	}
 	void draw() {
 		if (false == m_showing) return;
-		float rx = (m_x - g_left_x) * 65.0f + 1;
-		float ry = (m_y - g_top_y) * 65.0f + 1;
+		float rx = (m_x - g_left_x) * TILE_WIDTH + 1;
+		float ry = (m_y - g_top_y) * TILE_WIDTH + 1;
 		m_sprite.setPosition(rx, ry);
 		g_window->draw(m_sprite);
 		auto size = m_name.getGlobalBounds();
 		if (m_mess_end_time < chrono::system_clock::now()) {
-			m_name.setPosition(rx + 32 - size.width / 2, ry - 10);
+			m_name.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - 10);
 			g_window->draw(m_name);
 		}
 		else {
-			m_chat.setPosition(rx + 32 - size.width / 2, ry - 10);
+			m_chat.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - 10);
 			g_window->draw(m_chat);
 		}
 	}
@@ -93,6 +94,7 @@ public:
 		m_name.setString(str);
 		if (id < MAX_USER) m_name.setFillColor(sf::Color(255, 255, 255));
 		else m_name.setFillColor(sf::Color(255, 255, 0));
+		m_name.setCharacterSize(TILE_WIDTH / 2);
 		m_name.setStyle(sf::Text::Bold);
 	}
 
@@ -100,8 +102,14 @@ public:
 		m_chat.setFont(g_font);
 		m_chat.setString(str);
 		m_chat.setFillColor(sf::Color(255, 255, 255));
+		m_chat.setCharacterSize(TILE_WIDTH / 2);
 		m_chat.setStyle(sf::Text::Bold);
+		
 		m_mess_end_time = chrono::system_clock::now() + chrono::seconds(3);
+	}
+	void set_Sprite_scale(float x, float y)
+	{
+		m_sprite.setScale(x, y);
 	}
 };
 
@@ -127,6 +135,7 @@ void client_initialize()
 	white_tile = OBJECT{ *board, 5, 5, TILE_WIDTH, TILE_WIDTH };
 	black_tile = OBJECT{ *board, 69, 5, TILE_WIDTH, TILE_WIDTH };
 	avatar = OBJECT{ *pieces, 128, 0, 64, 64 };
+	avatar.set_Sprite_scale((float)TILE_WIDTH / 64, (float)TILE_WIDTH / 64);
 	avatar.move(4, 4);
 }
 
@@ -166,10 +175,11 @@ void ProcessPacket(char* ptr)
 			avatar.show();
 		}
 		else if (id < MAX_USER) {
-			players[id] = OBJECT{ *pieces, 0, 0, 64, 64 };
+			players[id] = OBJECT{ *pieces, 0, 0,  64, 64 };
 			players[id].id = id;
 			players[id].move(my_packet->x, my_packet->y);
 			players[id].set_name(my_packet->name);
+			players[id].set_Sprite_scale((float)TILE_WIDTH / 64, (float)TILE_WIDTH / 64);
 			players[id].show();
 		}
 		else {
@@ -177,6 +187,7 @@ void ProcessPacket(char* ptr)
 			players[id].id = id;
 			players[id].move(my_packet->x, my_packet->y);
 			players[id].set_name(my_packet->name);
+			players[id].set_Sprite_scale((float)TILE_WIDTH / 64, (float)TILE_WIDTH / 64);
 			players[id].show();
 		}
 		break;
@@ -343,6 +354,7 @@ int main()
 				window.close();
 			if (event.type == sf::Event::KeyPressed) {
 				int direction = -1;
+				bool attack = false;
 				switch (event.key.code) {
 				case sf::Keyboard::Left:
 					direction = 2;
@@ -356,6 +368,9 @@ int main()
 				case sf::Keyboard::Down:
 					direction = 1;
 					break;
+				case  sf::Keyboard::Space:
+					attack = true;
+					break;
 				case sf::Keyboard::Escape:
 					window.close();
 					break;
@@ -365,6 +380,15 @@ int main()
 					p.size = sizeof(p);
 					p.type = CS_MOVE;
 					p.direction = direction;
+					send_packet(&p);
+				}
+				else if(attack)
+				{
+					CS_ATTACK_PACKET p;
+					p.size = sizeof(p);
+					p.type = CS_ATTACK;
+					for (auto& a : p.mess)
+						a = 'k';
 					send_packet(&p);
 				}
 

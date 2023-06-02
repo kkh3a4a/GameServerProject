@@ -27,7 +27,7 @@ const static int MAX_BUFF_SIZE = 255;
 
 #pragma comment (lib, "ws2_32.lib")
 
-#include "..\protocol.h"
+#include "..\protocol_2023.h"
 
 HANDLE g_hiocp;
 
@@ -126,7 +126,7 @@ void SendPacket(int cl, void* packet)
 
 void ProcessPacket(int ci, unsigned char packet[])
 {
-	switch (packet[1]) {
+	switch (static_cast<char>(packet[2])) {
 	case SC_MOVE_OBJECT: {
 		SC_MOVE_OBJECT_PACKET* move_packet = reinterpret_cast<SC_MOVE_OBJECT_PACKET*>(packet);
 		if (move_packet->id < MAX_CLIENTS) {
@@ -199,10 +199,11 @@ void Worker_Thread()
 			//std::cout << "RECV from Client :" << ci;
 			//std::cout << "  IO_SIZE : " << io_size << std::endl;
 			unsigned char* buf = g_clients[ci].recv_over.IOCP_buf;
+			unsigned short* ptr_size = reinterpret_cast<unsigned short*>(g_clients[ci].recv_over.IOCP_buf);
 			unsigned psize = g_clients[ci].curr_packet_size;
 			unsigned pr_size = g_clients[ci].prev_packet_data;
 			while (io_size > 0) {
-				if (0 == psize) psize = buf[0];
+				if (0 == psize) psize = ptr_size[0];
 				if (io_size + pr_size >= psize) {
 					// 지금 패킷 완성 가능
 					unsigned char packet[MAX_PACKET_SIZE];
@@ -211,6 +212,7 @@ void Worker_Thread()
 					ProcessPacket(static_cast<int>(ci), packet);
 					io_size -= psize - pr_size;
 					buf += psize - pr_size;
+					ptr_size = reinterpret_cast<unsigned short*>(buf);
 					psize = 0; pr_size = 0;
 				}
 				else {
