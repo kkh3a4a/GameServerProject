@@ -70,6 +70,7 @@ void initialize_npc()
 		lua_register(L, "API_SendMessage", API_SendMessage);
 		lua_register(L, "API_get_x", API_get_x);
 		lua_register(L, "API_get_y", API_get_y);
+		lua_register(L, "API_Attack", API_Attack);
 	}
 	cout << "NPC_initialize success" << endl;
 }

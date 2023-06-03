@@ -29,6 +29,7 @@ constexpr char SC_CHAT = 6;
 constexpr char SC_LOGIN_OK = 7;
 constexpr char SC_LOGIN_FAIL = 8;
 constexpr char SC_STAT_CHANGE = 9;
+constexpr char SC_HP_CHANGE = 10;
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
@@ -123,7 +124,12 @@ struct SC_STAT_CHANGE_PACKET {
 	int		max_hp;
 	int		exp;
 	int		level;
-
 };
 
+struct SC_HP_CHANGE_PACKET {
+	unsigned short size;
+	char	type;
+	int		id;
+	int		hp;
+};
 #pragma pack (pop)

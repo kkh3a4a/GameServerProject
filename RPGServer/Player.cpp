@@ -113,3 +113,14 @@ void Player::send_chat_packet(int p_id, const char* mess)
 	strcpy_s(packet.mess, mess);
 	send_packet(&packet);
 }
+
+void Player::send_change_hp(int o_id)
+{
+	SC_HP_CHANGE_PACKET packet;
+	packet.hp = objects[o_id]->_hp;
+	packet.id = objects[o_id]->_id;
+	packet.size = sizeof(packet);
+	packet.type = SC_HP_CHANGE;
+
+	send_packet(&packet);
+}

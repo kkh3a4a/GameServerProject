@@ -232,6 +232,13 @@ void ProcessPacket(char* ptr)
 
 		break;
 	}
+	case SC_HP_CHANGE:
+	{
+		SC_HP_CHANGE_PACKET* packet = reinterpret_cast<SC_HP_CHANGE_PACKET*>(ptr);
+		int other_id = packet->id;
+		cout << other_id << " is HP : " << packet->hp << endl;
+		break;
+	}
 	default:
 		printf("Unknown PACKET type [%d]\n", ptr[2]);
 	}

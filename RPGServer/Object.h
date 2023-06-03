@@ -10,9 +10,10 @@ public:
 
 	int		_x, _y, _z;		//location
 	int		_id;	
+	int		_dmg;
 	int		_last_move_time;	
 	char	_name[20]{};
-
+	int		_hp;
 	S_STATE	_state = ST_FREE;
 	std::shared_mutex _s_lock;
 

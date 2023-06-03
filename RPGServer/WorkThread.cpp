@@ -120,6 +120,23 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			delete ex_over;
 			break;
 		}
+		case OP_AI_DEFENCE:
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			npc->_lua_lock.lock();
+			lua_State* L = npc->_L;
+			if (L != nullptr)
+			{
+				lua_getglobal(L, "event_player_Attack");
+				lua_pushnumber(L, ex_over->_causeId);
+				int status = lua_pcall(L, 1, 0, 0);
+
+
+			}
+			npc->_lua_lock.unlock();
+			delete ex_over;
+			break;
+		}
 		case DB_RECV:
 		{
 			int remain_data = num_bytes + DB_prev_size;

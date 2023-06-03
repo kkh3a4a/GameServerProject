@@ -217,7 +217,25 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	case CS_ATTACK:
 	{
 		CS_ATTACK_PACKET* packet = reinterpret_cast<CS_ATTACK_PACKET*>(pk);
-		cout << o_id << "is Attack" << endl;
+		Player* player = reinterpret_cast<Player*>(objects[o_id]);
+		{
+			shared_lock<shared_mutex> lock(player->_vl);
+			for (auto& v_id : player->_view_list)
+			{
+				if (v_id < MAX_USER)
+					continue;
+				{
+					shared_lock<shared_mutex> slock(objects[v_id]->_s_lock);
+					if (objects[v_id]->_state != ST_INGAME)
+						continue;
+				}
+				WSA_OVER_EX* w_ex = new WSA_OVER_EX;
+				w_ex->_causeId = o_id;
+				w_ex->_iocpop = OP_AI_DEFENCE;
+				PostQueuedCompletionStatus(h_iocp, 1, v_id, &w_ex->_wsaover);
+			}
+			
+		}
 		break;
 	}
 	case DS_PLAYER_LOGIN:
@@ -237,7 +255,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 }
 
 
-void WSA_OVER_EX::disconnect(int o_id)	//矫具贸府 救等淀?
+void WSA_OVER_EX::disconnect(int o_id)
 {
 	Player* player = reinterpret_cast<Player*>(objects[o_id]);
 	for (int p_id = 0; p_id < MAX_USER; ++p_id) {
@@ -513,6 +531,24 @@ int API_SendMessage(lua_State* L)
 	return 0;
 }
 
+int API_Attack(lua_State* L)
+{
+	int atk_id = (int)lua_tointeger(L, -2);
+	int def_id = (int)lua_tointeger(L, -1);
+	objects[def_id]->_hp -= objects[atk_id]->_dmg;
+	cout << def_id << "is Hp : " << objects[def_id]->_hp << endl;
+	lua_pop(L, 3);
+	{
+		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
+		for (auto& p_id : objects[def_id]->_view_list) {
+			if (p_id >= MAX_USER)
+				continue;
+			Player* player = reinterpret_cast<Player*>(objects[p_id]);
+			player->send_change_hp(def_id);
+		}
+	}
+	return 0;
+}
 
 EVENT::EVENT()
 {

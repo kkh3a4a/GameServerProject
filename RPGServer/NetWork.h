@@ -41,8 +41,10 @@ enum IOCPOP
 	OP_SEND,
 	OP_ACCEPT,
 	OP_NPC_RANDOMMOVE,
+	OP_AI_DEFENCE,
 	OP_AI_HELLO,
 	OP_AI_BYE,
+	
 	DB_RECV,
 	DB_SEND,
 
@@ -78,12 +80,15 @@ int get_new_player_id();
 bool can_see(int p1, int p2);
 
 bool is_NPC(int _id);
-
+/// <summary> LUA Script
 int API_get_x(lua_State* L);
 
 int API_get_y(lua_State* L);
 
 int API_SendMessage(lua_State* L);
+
+int API_Attack(lua_State* L);
+///////////////////////////////////////////////////////
 void zone_check(int x, int y, set<int>&);
 class EVENT
 {

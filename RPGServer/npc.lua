@@ -9,6 +9,18 @@ function set_countmove(cnt)
 	countmove = cnt;
 end
 
+function event_player_Attack(atk_id)
+   atk_x = API_get_x(atk_id);
+   atk_y = API_get_y(atk_id);
+   my_x = API_get_x(myid);
+   my_y = API_get_y(myid);
+   if (math.abs(atk_x - my_x) <= 1 ) then
+      if (math.abs(atk_y - my_y) <= 1) then
+         API_Attack( atk_id, myid);
+      end
+   end
+end
+
 function event_player_move(player)
    player_x = API_get_x(player);
    player_y = API_get_y(player);

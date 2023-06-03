@@ -71,9 +71,6 @@
     <ClInclude Include="NetWork.h">
       <Filter>소스 파일\NetWork</Filter>
     </ClInclude>
-    <ClInclude Include="..\protocol.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="WorkThread.h">
       <Filter>소스 파일\WorkThread</Filter>
     </ClInclude>
@@ -85,6 +82,9 @@
     </ClInclude>
     <ClInclude Include="TimerThread.h">
       <Filter>소스 파일\NetWork\TimerThread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\protocol_2023.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
