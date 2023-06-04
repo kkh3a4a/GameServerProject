@@ -222,13 +222,14 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 			shared_lock<shared_mutex> lock(player->_vl);
 			for (auto& v_id : player->_view_list)
 			{
-				if (v_id < MAX_USER)
-					continue;
 				{
 					shared_lock<shared_mutex> slock(objects[v_id]->_s_lock);
 					if (objects[v_id]->_state != ST_INGAME)
 						continue;
 				}
+				if (v_id < MAX_USER)
+					continue;
+				
 				WSA_OVER_EX* w_ex = new WSA_OVER_EX;
 				w_ex->_causeId = o_id;
 				w_ex->_iocpop = OP_AI_DEFENCE;
