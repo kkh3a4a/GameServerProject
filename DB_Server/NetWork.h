@@ -9,16 +9,18 @@
 #include<thread>
 #define UNICODE  
 #include <sqlext.h>  
+#include<map>
 //#include"Zone.h"
 
 using namespace std;
 extern HANDLE h_iocp;
 bool CAS(volatile int* addr, int expected, int update);
-extern SOCKET DB_socket, SV_socket;
+extern SOCKET DB_socket, G_socket;
 extern SQLHENV henv;
 extern SQLHDBC hdbc;
 extern SQLHSTMT hstmt;
 extern SQLRETURN retcode;
+extern map<int, SOCKET> G_server;
 
 extern int _prev_size;
 
@@ -40,11 +42,11 @@ public:
 public:
 	WSA_OVER_EX();
 	WSA_OVER_EX(IOCPOP iocpop, unsigned char byte, void* buf);
-	void processpacket(int o_id, char* pk);
+	void processpacket(int o_id, void* pk);
 	void disconnect(int o_id);
 };
 extern WSA_OVER_EX _wsa_recv_over;
 
-void do_recv();
-void send_packet(void*);
+void do_recv(int key);
+void send_packet(void*, int key);
 void error_display(const char* msg, int err_no);

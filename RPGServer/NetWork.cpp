@@ -49,57 +49,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
-		player->_x = rand() % W_WIDTH;
-		player->_y = rand() % W_HEIGHT;
-
-		/*player->_x = 49 + o_id * 1;
-		player->_y = 49 + o_id * 1;*/
-		int my_zoneY, my_zoneX;
-		my_zoneY = player->_y / ZONE_SEC;
-		my_zoneX = player->_x / ZONE_SEC;
-		zone[my_zoneY][my_zoneX]->ADD(player->_id);
-
+		string str = packet->name;
+		str.erase(0, 1); // p 제거
+		int id = std::stoi(str); // 문자열을 int형으로 변환합니다.
+		player->_db_id = id;
 		strcpy_s(player->_name, packet->name);
-		player->send_login_info_packet();
-		{
-			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
-			player->_state = ST_INGAME;
-		}
-		set<int> z_list;
-		zone_check(player->_x, player->_y, z_list);
-		for (auto& p_id : z_list) {
-			{
-				std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
-				if (objects[p_id]->_state != ST_INGAME)
-				{
-					continue;
-				}
-			}
-
-			if (objects[p_id]->_id == player->_id) continue;
-			if (can_see(player->_id, objects[p_id]->_id) == false) continue;
-
-			if(!is_NPC(p_id))
-			{
-				Player*pl = reinterpret_cast<Player*>(objects[p_id]);
-				pl->send_add_object_packet(player->_id);
-			}
-			else 
-			{
-				NPC* nl = reinterpret_cast<NPC*>(objects[p_id]);
-				nl->add_objects(player->_id);
-				bool before_wake = nl->_n_wake;
-				if (before_wake == 0)
-				{
-					if (CAS(reinterpret_cast<volatile int*>(&nl->_n_wake), before_wake, 1))
-						wake_up_npc(nl->_id);
-				}
-			}
-
-			player->send_add_object_packet(objects[p_id]->_id);
-
-			
-		}
+		DB_player_login(player->_db_id, player->_name, o_id);
 		break;
 	}
 	case CS_MOVE:
@@ -242,7 +197,57 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	case DS_PLAYER_LOGIN:
 	{
 		DS_PLAYER_LOGIN_PACKET* packet = reinterpret_cast<DS_PLAYER_LOGIN_PACKET*>(pk);
+
+		Player* player = reinterpret_cast<Player*>(objects[packet->s_id]);
 		cout << "LOGIN : " << packet->id << endl;
+		player->_x = packet->x;
+		player->_y = packet->y;
+		player->_max_hp = packet->max_hp;
+		player->_hp = packet->hp;
+		player->_level = packet->level;
+		player->_exp = packet->exp;
+		int my_zoneY, my_zoneX;
+		my_zoneY = player->_y / ZONE_SEC;
+		my_zoneX = player->_x / ZONE_SEC;
+		zone[my_zoneY][my_zoneX]->ADD(player->_id);
+
+		player->send_login_info_packet();
+		{
+			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+			player->_state = ST_INGAME;
+		}
+		set<int> z_list;
+		zone_check(player->_x, player->_y, z_list);
+		for (auto& p_id : z_list) {
+			{
+				std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
+				if (objects[p_id]->_state != ST_INGAME)
+				{
+					continue;
+				}
+			}
+
+			if (objects[p_id]->_id == player->_id) continue;
+			if (can_see(player->_id, objects[p_id]->_id) == false) continue;
+
+			if (!is_NPC(p_id))
+			{
+				Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+				pl->send_add_object_packet(player->_id);
+			}
+			else
+			{
+				NPC* nl = reinterpret_cast<NPC*>(objects[p_id]);
+				nl->add_objects(player->_id);
+				bool before_wake = nl->_n_wake;
+				if (before_wake == 0)
+				{
+					if (CAS(reinterpret_cast<volatile int*>(&nl->_n_wake), before_wake, 1))
+						wake_up_npc(nl->_id);
+				}
+			}
+			player->send_add_object_packet(objects[p_id]->_id);
+		}
 		break;
 	}
 	default:
@@ -564,11 +569,13 @@ void DB_send_packet(void* pk)
 }
 
 
-void DB_player_login(int id) {
+void DB_player_login(int id, char name[20], int s_id) {
 	SD_PLAYER_LOGIN_PACKET packet;
 	packet.id = id;
+	strcpy_s(packet.name, name);
 	packet.size = sizeof(packet);
 	packet.type = SD_PLAYER_LOGIN;
+	packet.s_id = s_id;
 	DB_send_packet(&packet);
 
 }
@@ -580,5 +587,6 @@ void DB_do_recv()
 	DB_wsa_recv_over._wsabuf.len = DB_BUF_SIZE - DB_prev_size;
 	DB_wsa_recv_over._wsabuf.buf = DB_wsa_recv_over._buf + DB_prev_size;
 	DB_wsa_recv_over._iocpop = DB_RECV;
+
 	WSARecv(DB_socket, &DB_wsa_recv_over._wsabuf, 1, 0, &recv_flag, &DB_wsa_recv_over._wsaover, 0);
 }

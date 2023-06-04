@@ -360,8 +360,11 @@ int main()
 	p.size = sizeof(p);
 	p.type = CS_LOGIN;
 
+	short my_id = 0;
+	cout << "insert my id : ";
+	cin >> my_id;
 	string player_name{ "P" };
-	player_name += to_string(GetCurrentProcessId());
+	player_name += to_string(my_id);
 
 	strcpy_s(p.name, player_name.c_str());
 	send_packet(&p);

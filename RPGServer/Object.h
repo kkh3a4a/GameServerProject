@@ -15,6 +15,7 @@ public:
 	char	_name[20]{};
 	int		_hp;
 	int		_max_hp;
+	int		_level;
 	S_STATE	_state = ST_FREE;
 	std::shared_mutex _s_lock;
 

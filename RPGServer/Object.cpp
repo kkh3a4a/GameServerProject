@@ -9,4 +9,5 @@ Object::Object()
 	_dmg = 10;
 	_hp = 100;
 	_max_hp = 100;
+	_level = 1;
 }

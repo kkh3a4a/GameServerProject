@@ -1,6 +1,6 @@
 
 constexpr int DB_PORT_NUM = 5000;
-constexpr int DB_BUF_SIZE = 255;
+constexpr int DB_BUF_SIZE = 512;
 constexpr int DB_NAME_SIZE = 20;
 /////////////////////// Packet ID 50บฮลอ
 
@@ -18,15 +18,24 @@ constexpr char SD_PLAYER_LOGIN = 50;
 //////////////////////////
 
 struct  DS_PLAYER_LOGIN_PACKET {
-	unsigned char size;
+	unsigned short size;
 	char	type;
+
+	int		s_id;
 	int		id;
+	int		hp;
+	int		max_hp;
+	int		exp;
+	int		level;
+	short	x, y;
 };
 
 struct  SD_PLAYER_LOGIN_PACKET {
-	unsigned char size;
+	unsigned short size;
 	char	type;
 	int		id;
+	int		s_id;
+	char	name[20];
 };
 
 

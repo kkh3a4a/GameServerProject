@@ -123,9 +123,9 @@ int main()
 	int addr_size = sizeof(cl_addr);
 	h_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(DB_socket), h_iocp, 999999, 0);
-	SV_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	G_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	g_a_over._iocpop = OP_ACCEPT;
-	ret = AcceptEx(DB_socket, SV_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
+	ret = AcceptEx(DB_socket, G_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
 	if (ret != 0)
 	{
 		int errorcode = WSAGetLastError();

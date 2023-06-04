@@ -12,6 +12,7 @@
 #include"TimerThread.h"
 #include <concurrent_priority_queue.h>
 #include"include/lua.hpp"
+#include<string>
 
 
 #pragma comment(lib, "lua54.lib")
@@ -108,6 +109,6 @@ public:
 
 /////////////////////////DB
 void DB_send_packet(void*);
-void DB_player_login(int id);
+void DB_player_login(int id, char name[20], int s_id);
 void DB_do_recv();
 

@@ -10,6 +10,7 @@ Player::Player(int id, S_STATE state)
 	_name[NAME_SIZE - 1] = {};
 	_socket = { 0 };
 	_state = state;
+	_db_id = 0;
 }
 
 void Player::send_packet(void* packet)

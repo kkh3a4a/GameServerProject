@@ -137,6 +137,7 @@
     <ClCompile Include="Zone.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\DBprotocol.h" />
     <ClInclude Include="..\protocol_2023.h" />
     <ClInclude Include="DefaultNPC.h" />
     <ClInclude Include="NetWork.h" />

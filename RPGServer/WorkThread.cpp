@@ -18,7 +18,8 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			if (ex_over->_iocpop == OP_ACCEPT) cout << "Accept Error";
 			else {
 				cout << "GQCS Error on client[" << key << "]\n";
-				ex_over->disconnect(static_cast<int>(key));
+				if(key != 1234567)
+					ex_over->disconnect(static_cast<int>(key));
 				if (ex_over->_iocpop == OP_SEND) delete ex_over;
 				continue;
 			}
@@ -140,7 +141,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		case DB_RECV:
 		{
 			int remain_data = num_bytes + DB_prev_size;
-			char* p = ex_over->_buf;
+			short* p = reinterpret_cast<short*>(ex_over->_buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
 				if (packet_size <= remain_data) {

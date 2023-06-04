@@ -9,6 +9,8 @@ public:
 	SOCKET	_socket;
 	int		_prev_size{};
 	char	_packet_buf[BUF_SIZE]{};
+	int		_db_id;
+	int		_exp;
 	
 
 	Player(int id, S_STATE _state);
