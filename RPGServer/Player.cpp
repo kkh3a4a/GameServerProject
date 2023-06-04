@@ -62,6 +62,18 @@ void Player::send_add_object_packet(int o_id)
 	packet.x = objects[o_id]->_x;
 	packet.y = objects[o_id]->_y;
 	send_packet(&packet);
+
+	if(o_id < MAXMOVEOBJECT)
+	{
+		SC_HP_CHANGE_PACKET h_packet;
+		h_packet.id = o_id;
+		h_packet.hp = objects[o_id]->_hp;
+		h_packet.max_hp = objects[o_id]->_max_hp;
+		h_packet.size = sizeof(h_packet);
+		h_packet.type = SC_HP_CHANGE;
+		send_packet(&h_packet);
+	}
+
 }
 
 void Player::send_move_packet(int o_id)
@@ -119,6 +131,7 @@ void Player::send_change_hp(int o_id)
 	SC_HP_CHANGE_PACKET packet;
 	packet.hp = objects[o_id]->_hp;
 	packet.id = objects[o_id]->_id;
+	packet.max_hp = objects[o_id]->_max_hp;
 	packet.size = sizeof(packet);
 	packet.type = SC_HP_CHANGE;
 

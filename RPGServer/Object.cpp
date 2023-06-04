@@ -8,4 +8,5 @@ Object::Object()
 	_id = -1;
 	_dmg = 10;
 	_hp = 100;
+	_max_hp = 100;
 }

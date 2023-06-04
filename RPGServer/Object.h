@@ -14,6 +14,7 @@ public:
 	int		_last_move_time;	
 	char	_name[20]{};
 	int		_hp;
+	int		_max_hp;
 	S_STATE	_state = ST_FREE;
 	std::shared_mutex _s_lock;
 

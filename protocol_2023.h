@@ -5,8 +5,8 @@ constexpr int BUF_SIZE = 512;
 
 constexpr int MAX_USER = 10000;
 constexpr int MAX_NPC = 20000;
-constexpr int MAXOBJECT = MAX_USER + MAX_NPC;
-
+constexpr int MAXMOVEOBJECT = MAX_USER + MAX_NPC;
+constexpr int MAXOBJECT = MAXMOVEOBJECT;
 constexpr int W_WIDTH = 2000;
 constexpr int W_HEIGHT = 2000;
 constexpr int ZONE_SEC = 50;
@@ -130,6 +130,7 @@ struct SC_HP_CHANGE_PACKET {
 	unsigned short size;
 	char	type;
 	int		id;
+	int		max_hp;
 	int		hp;
 };
 #pragma pack (pop)

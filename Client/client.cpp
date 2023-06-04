@@ -18,7 +18,7 @@ sf::TcpSocket s_socket;
 constexpr auto SCREEN_WIDTH = 16;
 constexpr auto SCREEN_HEIGHT = 16;
 
-constexpr auto TILE_WIDTH = 40;
+constexpr auto TILE_WIDTH = 64;
 constexpr auto WINDOW_WIDTH = SCREEN_WIDTH * TILE_WIDTH;   // size of window
 constexpr auto WINDOW_HEIGHT = SCREEN_WIDTH * TILE_WIDTH;
 
@@ -33,13 +33,15 @@ class OBJECT {
 private:
 	bool m_showing;
 	sf::Sprite m_sprite;
-
+	sf::Sprite m_HP;
 	sf::Text m_name;
 	sf::Text m_chat;
 	chrono::system_clock::time_point m_mess_end_time;
 public:
 	int id;
 	int m_x, m_y;
+	int hp;
+	int _max_hp;
 	char name[NAME_SIZE];
 	OBJECT(sf::Texture& t, int x, int y, int x2, int y2) {
 		m_showing = false;
@@ -47,7 +49,12 @@ public:
 		//m_sprite.setScale(0.5f, 0.5f);
 		m_sprite.setTextureRect(sf::IntRect(x, y, x2, y2));
 		set_name("NONAME");
+		sf::Texture hpTexture;
+		hpTexture.loadFromFile("hp_Image.png");
+		m_HP.setTexture(hpTexture);
+		m_HP.setColor(sf::Color::Green);
 		m_mess_end_time = chrono::system_clock::now();
+		hp = 0;
 	}
 	OBJECT() {
 		m_showing = false;
@@ -80,6 +87,8 @@ public:
 		m_sprite.setPosition(rx, ry);
 		g_window->draw(m_sprite);
 		auto size = m_name.getGlobalBounds();
+
+		//채팅 or 이름 그리기
 		if (m_mess_end_time < chrono::system_clock::now()) {
 			m_name.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - 10);
 			g_window->draw(m_name);
@@ -88,6 +97,13 @@ public:
 			m_chat.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - 10);
 			g_window->draw(m_chat);
 		}
+		if(hp > 0)
+		{
+			m_HP.setTextureRect(sf::IntRect(0, 0, (int)(120 * ((float)hp / _max_hp)), 10));
+			m_HP.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry + int(TILE_WIDTH) );
+			g_window->draw(m_HP);
+		}
+		//
 	}
 	void set_name(const char str[]) {
 		m_name.setFont(g_font);
@@ -236,6 +252,8 @@ void ProcessPacket(char* ptr)
 	{
 		SC_HP_CHANGE_PACKET* packet = reinterpret_cast<SC_HP_CHANGE_PACKET*>(ptr);
 		int other_id = packet->id;
+		players[other_id].hp = packet->hp;
+		players[other_id]._max_hp = packet->max_hp;
 		cout << other_id << " is HP : " << packet->hp << endl;
 		break;
 	}
