@@ -18,7 +18,7 @@ sf::TcpSocket s_socket;
 constexpr auto SCREEN_WIDTH = 16;
 constexpr auto SCREEN_HEIGHT = 16;
 
-constexpr auto TILE_WIDTH = 64;
+constexpr auto TILE_WIDTH = 40;
 constexpr auto WINDOW_WIDTH = SCREEN_WIDTH * TILE_WIDTH;   // size of window
 constexpr auto WINDOW_HEIGHT = SCREEN_WIDTH * TILE_WIDTH;
 
@@ -360,7 +360,7 @@ int main()
 	p.size = sizeof(p);
 	p.type = CS_LOGIN;
 
-	short my_id = 0;
+	int my_id = 0;
 	cout << "insert my id : ";
 	cin >> my_id;
 	string player_name{ "P" };

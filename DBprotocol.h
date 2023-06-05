@@ -7,7 +7,7 @@ constexpr int DB_NAME_SIZE = 20;
 constexpr char DS_PLAYER_LOGIN = 50;
 
 
-
+constexpr int DB_THREAD_NUM = 8;
 
 
 
@@ -27,7 +27,7 @@ struct  DS_PLAYER_LOGIN_PACKET {
 	int		max_hp;
 	int		exp;
 	int		level;
-	short	x, y;
+	int		x, y;
 };
 
 struct  SD_PLAYER_LOGIN_PACKET {
