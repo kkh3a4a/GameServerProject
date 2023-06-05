@@ -114,7 +114,6 @@ struct SC_LOGIN_OK_PACKET {
 struct SC_LOGIN_FAIL_PACKET {
 	unsigned short size;
 	char	type;
-
 };
 
 struct SC_STAT_CHANGE_PACKET {

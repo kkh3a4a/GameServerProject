@@ -13,7 +13,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		WSAOVERLAPPED* over = nullptr;
 		
 		BOOL ret = GetQueuedCompletionStatus(h_iocp, &num_bytes, &key, &over, INFINITE);
-		WSA_OVER_EX* ex_over = reinterpret_cast<WSA_OVER_EX*>(over);
+    		WSA_OVER_EX* ex_over = reinterpret_cast<WSA_OVER_EX*>(over);
 		if (FALSE == ret) {
 			if (ex_over->_iocpop == OP_ACCEPT) cout << "Accept Error";
 			else {
@@ -107,8 +107,6 @@ void worker_thread(WSA_OVER_EX g_a_over)
 				lua_getglobal(L, "event_player_move");
 				lua_pushnumber(L, ex_over->_causeId);
 				int status = lua_pcall(L, 1, 0, 0);
-				
-
 			}
 			npc->_lua_lock.unlock();
 
@@ -119,6 +117,20 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		case OP_AI_BYE:
 		{
 			delete ex_over;
+			break;
+		}
+		case OP_NPC_RESPAWN:
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			{
+				npc->_n_wake = false;
+				//cout << "respawn " << npc->_id << endl;
+				npc->_hp = npc->_max_hp;
+				std::unique_lock<std::shared_mutex> lock(npc->_s_lock);				
+				npc->_state = ST_INGAME;
+				
+			}
+			npc->respawn_NPC();
 			break;
 		}
 		case OP_AI_DEFENCE:

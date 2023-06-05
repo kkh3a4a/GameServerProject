@@ -1,6 +1,7 @@
 #pragma once
 #include "NetWork.h"
 
+
 class NPC : public Object
 {
 public:
@@ -11,4 +12,6 @@ public:
 	lua_State* _L;
 	std::mutex _lua_lock;
 	chrono::system_clock::time_point _last_hello_time;
+	void dead_NPC();
+	void respawn_NPC();
 };

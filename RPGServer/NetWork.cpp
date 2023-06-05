@@ -298,6 +298,9 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 {
 
 	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);
+	if (npc->_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
+		return;
+
 	short x = npc->_x;
 	short y = npc->_y;
 
@@ -354,21 +357,21 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 			pl->send_add_object_packet(n_id);
 		}
 	}
-	npc->_lua_lock.lock();
-	lua_State* L = npc->_L;
-	if (L != nullptr)
-	{
-		lua_getglobal(L, "event_three_move");
-		int status = lua_pcall(L, 0, 0, 0);
-		//if (status != LUA_OK) {
-		//	const char* errorMessage = lua_tostring(L, -1);
-		//	//printf("Lua error: %s\n", errorMessage);
-		//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
-		//}
-		//lua_pop(L, 1);
+	//npc->_lua_lock.lock();
+	//lua_State* L = npc->_L;
+	//if (L != nullptr)
+	//{
+	//	lua_getglobal(L, "event_three_move");
+	//	int status = lua_pcall(L, 0, 0, 0);
+	//	//if (status != LUA_OK) {
+	//	//	const char* errorMessage = lua_tostring(L, -1);
+	//	//	//printf("Lua error: %s\n", errorMessage);
+	//	//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
+	//	//}
+	//	//lua_pop(L, 1);
 
-	}
-	npc->_lua_lock.unlock();
+	//}
+	//npc->_lua_lock.unlock();
 	//
 	for (auto& p_id : old_vlist) {
 		if (0 == near_list.count(p_id)) {
@@ -543,6 +546,18 @@ int API_Attack(lua_State* L)
 	int def_id = (int)lua_tointeger(L, -1);
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	cout << def_id << "is Hp : " << objects[def_id]->_hp << endl;
+	if (objects[def_id]->_hp <= 0)
+	{
+		if (def_id < MAX_USER)
+		{
+
+		}
+		if (def_id >= MAX_USER)
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
+			npc->dead_NPC();
+		}
+	}
 	lua_pop(L, 3);
 	{
 		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);

@@ -148,6 +148,10 @@ void ProcessPacket(int ci, unsigned char packet[])
 					   break;
 	case SC_ADD_OBJECT: break;
 	case SC_REMOVE_OBJECT: break;
+	case SC_LOGIN_OK: break;
+	case SC_LOGIN_FAIL: break;
+	case SC_HP_CHANGE: break;
+	case SC_STAT_CHANGE: break;
 	case SC_LOGIN_INFO:
 	{
 		g_clients[ci].connected = true;
@@ -319,8 +323,8 @@ void Adjust_Number_Of_Client()
 
 	CS_LOGIN_PACKET l_packet;
 
-	int temp = num_connections;
-	sprintf_s(l_packet.name, "%d", temp);
+	int temp = num_connections + 10000;
+	sprintf_s(l_packet.name, "D%d", temp);
 	l_packet.size = sizeof(l_packet);
 	l_packet.type = CS_LOGIN;
 	SendPacket(num_connections, &l_packet);

@@ -25,7 +25,7 @@ constexpr auto WINDOW_HEIGHT = SCREEN_WIDTH * TILE_WIDTH;
 int g_left_x;
 int g_top_y;
 int g_myid;
-
+volatile bool login_succes = false;
 sf::RenderWindow* g_window;
 sf::Font g_font;
 
@@ -176,6 +176,7 @@ void ProcessPacket(char* ptr)
 		g_left_x = packet->x - SCREEN_WIDTH / 2;
 		g_top_y = packet->y - SCREEN_HEIGHT / 2;
 		avatar.show();
+		login_succes = true;
 	}
 	break;
 
@@ -372,7 +373,7 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "2D CLIENT");
 	g_window = &window;
-
+	while (login_succes);
 	while (window.isOpen())
 	{
 		sf::Event event;
