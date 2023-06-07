@@ -191,6 +191,13 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			delete ex_over;
 			break;
 		}
+		case OP_NPC_MOVE:
+		{
+			ex_over->do_npc_move(static_cast<int>(key));
+
+			delete ex_over;
+			break;
+		}
 		case DB_RECV:
 		{
 			int remain_data = num_bytes + DB_prev_size;

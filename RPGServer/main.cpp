@@ -72,7 +72,6 @@ void initialize_npc()
 		lua_register(L, "API_get_x", API_get_x);
 		lua_register(L, "API_get_y", API_get_y);
 		lua_register(L, "API_Attack", API_Attack);
-		lua_register(L, "API_Attack_Range", API_Attack_Range);
 	}
 	cout << "NPC_initialize success" << endl;
 }

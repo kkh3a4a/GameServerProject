@@ -16,22 +16,11 @@ function event_object_Attack(atk_id)
    my_y = API_get_y(myid);
    if (math.abs(atk_x - my_x) <= 1 ) then
       if (math.abs(atk_y - my_y) <= 1) then
-         API_Attack( atk_id, myid);
+         API_Attack(atk_id, myid);
       end
    end
 end
 
-function event_Attack_Range(atk_id)
-   atk_x = API_get_x(atk_id);
-   atk_y = API_get_y(atk_id);
-   my_x = API_get_x(myid);
-   my_y = API_get_y(myid);
-   if (math.abs(atk_x - my_x) <= 1 ) then
-      if (math.abs(atk_y - my_y) <= 1) then
-         API_Attack_Range(atk_id, myid);
-      end
-   end
-end
 
 
 function event_player_move(player)

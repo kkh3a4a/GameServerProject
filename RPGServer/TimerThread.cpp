@@ -54,6 +54,16 @@ void TimerThread()
 			PostQueuedCompletionStatus(h_iocp, 1, npc_id, &over->_wsaover);
 			break;
 		}
+		case EV_MOVE:
+		{
+			int npc_id = _event._o_id;
+			WSA_OVER_EX* over = new WSA_OVER_EX(OP_NPC_MOVE, 0, 0);
+			ZeroMemory(&over->_wsaover, sizeof(over->_wsaover));
+			over->_iocpop = OP_NPC_MOVE;
+			over->_e_type = _event._e_type;
+			PostQueuedCompletionStatus(h_iocp, 1, npc_id, &over->_wsaover);
+			break;
+		}
 		case EV_HEAL:
 		{
 			int npc_id = _event._o_id;
