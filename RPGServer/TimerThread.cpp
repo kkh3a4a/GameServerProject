@@ -52,6 +52,27 @@ void TimerThread()
 			over->_iocpop = OP_NPC_RESPAWN;
 			over->_e_type = _event._e_type;
 			PostQueuedCompletionStatus(h_iocp, 1, npc_id, &over->_wsaover);
+			break;
+		}
+		case EV_HEAL:
+		{
+			int npc_id = _event._o_id;
+			WSA_OVER_EX* over = new WSA_OVER_EX(OP_NPC_HEAL, 0, 0);
+			ZeroMemory(&over->_wsaover, sizeof(over->_wsaover));
+			over->_iocpop = OP_NPC_HEAL;
+			over->_e_type = _event._e_type;
+			PostQueuedCompletionStatus(h_iocp, 1, npc_id, &over->_wsaover);
+			break;
+		}
+		case EV_ATTACK:
+		{
+			int npc_id = _event._o_id;
+			WSA_OVER_EX* over = new WSA_OVER_EX(OP_NPC_ATTACK, 0, 0);
+			ZeroMemory(&over->_wsaover, sizeof(over->_wsaover));
+			over->_iocpop = OP_NPC_ATTACK;
+			over->_e_type = _event._e_type;
+			PostQueuedCompletionStatus(h_iocp, 1, npc_id, &over->_wsaover);
+			break;
 		}
 		default:
 			break;

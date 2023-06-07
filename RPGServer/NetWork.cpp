@@ -167,6 +167,14 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 				}
 			}
 		}
+		player->_movecount++;
+		if (player->_movecount > 5)
+		{
+			player->_movecount = 0;
+			player->send_location_DB();
+		}
+
+
 		break;
 	}
 	case CS_ATTACK:
@@ -248,6 +256,11 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 			}
 			player->send_add_object_packet(objects[p_id]->_id);
 		}
+
+		for (int i = player->_level - 1; i > 0; --i)
+		{
+			player->_dmg += i;
+		}
 		break;
 	}
 	default:
@@ -300,6 +313,28 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);
 	if (npc->_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
 		return;
+	if (npc->_state == ST_BATTLE)
+	{
+
+		EVENT ev{ n_id, EV_ATTACK,chrono::system_clock::now() + std::chrono::milliseconds(500)};
+		//l_q.lock();
+		timer_queue.push(ev);
+		npc->_lua_lock.lock();
+		lua_State* L = npc->_L;
+		if (L != nullptr)
+		{
+			lua_getglobal(L, "event_three_move");
+			int status = lua_pcall(L, 0, 0, 0);
+			//if (status != LUA_OK) {
+			//	const char* errorMessage = lua_tostring(L, -1);
+			//	//printf("Lua error: %s\n", errorMessage);
+			//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
+			//}
+			//lua_pop(L, 1);
+
+		}
+		npc->_lua_lock.unlock();
+	}
 
 	short x = npc->_x;
 	short y = npc->_y;
@@ -544,8 +579,20 @@ int API_Attack(lua_State* L)
 {
 	int atk_id = (int)lua_tointeger(L, -2);
 	int def_id = (int)lua_tointeger(L, -1);
+	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
+	{
+		if (def_id >= MAX_USER)
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
+			{
+				std::unique_lock<std::shared_mutex> lock(npc->_s_lock);
+				npc->_state = ST_BATTLE;
+			}
+			npc->heal_NPC();
+		}
+	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	cout << def_id << "is Hp : " << objects[def_id]->_hp << endl;
+	
 	if (objects[def_id]->_hp <= 0)
 	{
 		if (def_id < MAX_USER)
@@ -555,6 +602,59 @@ int API_Attack(lua_State* L)
 		if (def_id >= MAX_USER)
 		{
 			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
+			if (atk_id < MAX_USER)
+			{
+				Player* player = reinterpret_cast<Player*>(objects[atk_id]);
+				player->kill_NPC(npc->_id);
+			}
+			npc->dead_NPC();
+		}
+	}
+	lua_pop(L, 3);
+	{
+		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
+		for (auto& p_id : objects[def_id]->_view_list) {
+			if (p_id >= MAX_USER)
+				continue;
+			Player* player = reinterpret_cast<Player*>(objects[p_id]);
+			player->send_change_hp(def_id);
+		}
+	}
+	return 0;
+}
+
+int API_Attack_Range(lua_State* L)
+{
+	int atk_id = (int)lua_tointeger(L, -2);
+	int def_id = (int)lua_tointeger(L, -1);
+	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
+	{
+		if (def_id >= MAX_USER)
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
+			{
+				std::unique_lock<std::shared_mutex> lock(npc->_s_lock);
+				npc->_state = ST_BATTLE;
+			}
+			npc->heal_NPC();
+		}
+	}
+	objects[def_id]->_hp -= objects[atk_id]->_dmg;
+
+	if (objects[def_id]->_hp <= 0)
+	{
+		if (def_id < MAX_USER)
+		{
+
+		}
+		if (def_id >= MAX_USER)
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
+			if (atk_id < MAX_USER)
+			{
+				Player* player = reinterpret_cast<Player*>(objects[atk_id]);
+				player->kill_NPC(npc->_id);
+			}
 			npc->dead_NPC();
 		}
 	}

@@ -48,6 +48,22 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk, int w_id)
 		
 		break;
 	}
+	case SD_PLAYER_CHANGE_EXP:
+	{
+		SD_PLAYER_CHANGE_EXP_PACKET* packet = reinterpret_cast<SD_PLAYER_CHANGE_EXP_PACKET*>(pk);
+
+		player_change_exp(w_id, packet->s_id, packet->id, packet->exp, packet->level, packet->max_hp);
+		break;
+	}
+	case SD_PLAYER_LOCATION:
+	{
+		SD_PLAYER_LOCATION_PACKET* packet = reinterpret_cast<SD_PLAYER_LOCATION_PACKET*>(pk);
+
+		player_change_location(w_id, packet->id, packet->x, packet->y);
+
+
+		break;
+	}
 	default:
 	{
 		DebugBreak();
@@ -230,3 +246,37 @@ void show_DB_error(SQLHSTMT hstmt) {
 	wcout << (L"SQL error : %ls\n", errMsg);
 	wcout << endl;
 }
+
+void player_change_location(int w_id, int id, int x, int y)
+{
+	auto retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc[w_id], &hstmt[w_id]);
+
+	{
+		SQLWCHAR query[100];
+		swprintf(query, 100, L"EXEC Location_User %d, %d, %d", id, x, y);
+		retcode = SQLExecDirect(hstmt[w_id], query, SQL_NTS);
+		if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO)
+		{
+			show_DB_error(hstmt[w_id]);
+		}
+		SQLFreeHandle(SQL_HANDLE_STMT, hstmt[w_id]);
+	}
+}
+
+void player_change_exp(int w_id, int s_id, int id, int exp, int level , int	max_hp)
+{
+	auto retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc[w_id], &hstmt[w_id]);
+	
+	{
+		SQLWCHAR query[100];
+    		swprintf(query, 100, L"EXEC Exp_User %d, %d, %d, %d", id, exp, level, max_hp);
+		int retcode = SQLExecDirect(hstmt[w_id], query, SQL_NTS);
+		if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO)
+		{
+			show_DB_error(hstmt[w_id]);
+		}
+		SQLFreeHandle(SQL_HANDLE_STMT, hstmt[w_id]);
+	}
+}
+
+

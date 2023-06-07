@@ -9,9 +9,12 @@ public:
 	
 	void add_objects(int o_id);
 
+	int _spawn_x = 0, _spawn_y = 0;
 	lua_State* _L;
 	std::mutex _lua_lock;
 	chrono::system_clock::time_point _last_hello_time;
 	void dead_NPC();
 	void respawn_NPC();
+	void heal_NPC();
+
 };

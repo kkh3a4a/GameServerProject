@@ -11,6 +11,7 @@ public:
 	char	_packet_buf[BUF_SIZE]{};
 	int		_db_id;
 	int		_exp;
+	int		_movecount = 0;
 	
 
 	Player(int id, S_STATE _state);
@@ -24,4 +25,6 @@ public:
 	void send_remove_object_packet(int o_id);
 	void send_chat_packet(int p_id, const char* mess);
 	void send_change_hp(int o_id);
+	void send_location_DB();
+	void kill_NPC(int n_id);
 };

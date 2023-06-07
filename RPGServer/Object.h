@@ -1,7 +1,7 @@
 #pragma once
 #include<unordered_set>
 #include<shared_mutex>
-enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
+enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME, ST_BATTLE};
 
 class Object
 {

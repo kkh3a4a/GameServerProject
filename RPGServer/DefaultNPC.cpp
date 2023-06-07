@@ -52,7 +52,8 @@ void NPC::dead_NPC()
 void NPC::respawn_NPC()
 {
 	unordered_set<int> near_list;
-
+	_x = _spawn_x;
+	_y = _spawn_y;
 	set<int> z_list;
 	zone_check(_x, _y, z_list);
 	for (auto& p_id : z_list) {
@@ -97,3 +98,13 @@ void NPC::respawn_NPC()
 	EVENT ev{ _id, EV_RANDOM_MOVE, chrono::system_clock::now() + 1s };
 	timer_queue.push(ev);
 }
+
+void NPC::heal_NPC()
+{
+	EVENT ev{ _id, EV_HEAL, chrono::system_clock::now() + 5s };
+	//l_q.lock();
+	timer_queue.push(ev);
+
+}
+
+

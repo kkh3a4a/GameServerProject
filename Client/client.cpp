@@ -25,7 +25,7 @@ constexpr auto WINDOW_HEIGHT = SCREEN_WIDTH * TILE_WIDTH;
 int g_left_x;
 int g_top_y;
 int g_myid;
-volatile bool login_succes = false;
+volatile bool login_success = false;
 sf::RenderWindow* g_window;
 sf::Font g_font;
 
@@ -97,11 +97,15 @@ public:
 			m_chat.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - 10);
 			g_window->draw(m_chat);
 		}
+
 		if(hp > 0)
 		{
-			m_HP.setTextureRect(sf::IntRect(0, 0, (int)(120 * ((float)hp / _max_hp)), 10));
+			m_HP.setTextureRect(sf::IntRect(0, 0, (int)(120 * ((float)hp / _max_hp) * ((float)TILE_WIDTH / 64)), int((float)10 * ((float)TILE_WIDTH / 64))));
 			m_HP.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry + int(TILE_WIDTH) );
 			g_window->draw(m_HP);
+		}
+		else {
+			cout << hp << endl;
 		}
 		//
 	}
@@ -175,8 +179,10 @@ void ProcessPacket(char* ptr)
 		avatar.move(packet->x, packet->y);
 		g_left_x = packet->x - SCREEN_WIDTH / 2;
 		g_top_y = packet->y - SCREEN_HEIGHT / 2;
+		avatar.hp = packet->hp;
+		avatar._max_hp = packet->max_hp;
 		avatar.show();
-		login_succes = true;
+		login_success = true;
 	}
 	break;
 
@@ -373,7 +379,6 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "2D CLIENT");
 	g_window = &window;
-	while (login_succes);
 	while (window.isOpen())
 	{
 		sf::Event event;

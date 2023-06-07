@@ -43,6 +43,8 @@ enum IOCPOP
 	OP_ACCEPT,
 	OP_NPC_RANDOMMOVE,
 	OP_NPC_RESPAWN,
+	OP_NPC_HEAL,
+	OP_NPC_ATTACK,
 	OP_AI_DEFENCE,
 	OP_AI_HELLO,
 	OP_AI_BYE,
@@ -90,6 +92,7 @@ int API_get_y(lua_State* L);
 int API_SendMessage(lua_State* L);
 
 int API_Attack(lua_State* L);
+int API_Attack_Range(lua_State* L);
 ///////////////////////////////////////////////////////
 void zone_check(int x, int y, set<int>&);
 class EVENT

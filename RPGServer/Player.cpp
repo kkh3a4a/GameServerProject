@@ -11,6 +11,7 @@ Player::Player(int id, S_STATE state)
 	_socket = { 0 };
 	_state = state;
 	_db_id = 0;
+	_movecount = 0;
 }
 
 void Player::send_packet(void* packet)
@@ -41,6 +42,8 @@ void Player::send_login_info_packet()
 	packet.type = SC_LOGIN_INFO;
 	packet.x = _x;
 	packet.y = _y;
+	packet.max_hp = _max_hp;
+	packet.hp = _hp;
 	send_packet(&packet);
 }
 
@@ -66,13 +69,7 @@ void Player::send_add_object_packet(int o_id)
 
 	if(o_id < MAXMOVEOBJECT)
 	{
-		SC_HP_CHANGE_PACKET h_packet;
-		h_packet.id = o_id;
-		h_packet.hp = objects[o_id]->_hp;
-		h_packet.max_hp = objects[o_id]->_max_hp;
-		h_packet.size = sizeof(h_packet);
-		h_packet.type = SC_HP_CHANGE;
-		send_packet(&h_packet);
+		send_change_hp(o_id);
 	}
 
 }
@@ -137,4 +134,41 @@ void Player::send_change_hp(int o_id)
 	packet.type = SC_HP_CHANGE;
 
 	send_packet(&packet);
+}
+
+void Player::send_location_DB()
+{
+	SD_PLAYER_LOCATION_PACKET packet;
+	packet.id = _db_id;
+	packet.x = _x;
+	packet.y = _y;
+	packet.size = sizeof(packet);
+	packet.type = SD_PLAYER_LOCATION;
+	DB_send_packet(&packet);
+}
+
+void Player::kill_NPC(int n_id)
+{
+	
+  	_exp += (objects[n_id]->_level * objects[n_id]->_level * 20);
+	if (_exp >= _level * 100)
+	{
+		cout << _id << " : Level Up [" << _id << "]" << endl;
+		_exp -= _level * 100;
+		_max_hp = (int)((float)_max_hp * (1.1));
+		_hp = _max_hp;
+		_dmg += _level;
+		_level++;
+	}
+
+	SD_PLAYER_CHANGE_EXP_PACKET packet;
+	packet.size = sizeof(packet);
+	packet.type = SD_PLAYER_CHANGE_EXP;
+	packet.id = _db_id;
+	packet.level = _level;
+	packet.max_hp = _max_hp;
+	packet.exp = _exp;
+
+	DB_send_packet(&packet);
+
 }

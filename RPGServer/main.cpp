@@ -42,8 +42,9 @@ void initialize_npc()
 		int npc_id = i + MAX_USER;
 		NPC* npc = reinterpret_cast<NPC*>(objects[npc_id]);
 
-		npc->_x = rand() % W_WIDTH;
-		npc->_y = rand() % W_HEIGHT;
+		npc->_spawn_x = npc->_x = rand() % W_WIDTH;
+		npc->_spawn_y = npc->_y = rand() % W_HEIGHT;
+		
 		/*npc->_x = 49 + i;
 		npc->_y = 49 + i;*/
 		npc->_state = ST_INGAME;
@@ -71,6 +72,7 @@ void initialize_npc()
 		lua_register(L, "API_get_x", API_get_x);
 		lua_register(L, "API_get_y", API_get_y);
 		lua_register(L, "API_Attack", API_Attack);
+		lua_register(L, "API_Attack_Range", API_Attack_Range);
 	}
 	cout << "NPC_initialize success" << endl;
 }

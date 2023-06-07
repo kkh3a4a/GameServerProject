@@ -140,7 +140,48 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			lua_State* L = npc->_L;
 			if (L != nullptr)
 			{
-				lua_getglobal(L, "event_player_Attack");
+				lua_getglobal(L, "event_object_Attack");
+				lua_pushnumber(L, ex_over->_causeId);
+				int status = lua_pcall(L, 1, 0, 0);
+
+
+			}
+			npc->_lua_lock.unlock();
+			delete ex_over;
+			break;
+		}
+		case OP_NPC_HEAL:
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			if (npc->_hp <= 0)
+			{
+				break;
+			}
+			npc->_hp += npc->_max_hp / 10;
+			if (npc->_hp >= npc->_max_hp)
+			{
+				npc->_hp = npc->_max_hp;
+				break;
+			}
+			for (auto& p_id : npc->_view_list) {
+				if (p_id >= MAX_USER)
+					continue;
+				Player* player = reinterpret_cast<Player*>(objects[p_id]);
+				player->send_change_hp(npc->_id);
+			}
+			EVENT ev{ npc->_id, EV_HEAL, chrono::system_clock::now() + 5s };
+			//l_q.lock();
+			timer_queue.push(ev);
+			break;
+		}
+		case OP_NPC_ATTACK:
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			npc->_lua_lock.lock();
+			lua_State* L = npc->_L;
+			if (L != nullptr)
+			{
+				lua_getglobal(L, "event_object_Attack");
 				lua_pushnumber(L, ex_over->_causeId);
 				int status = lua_pcall(L, 1, 0, 0);
 
