@@ -137,10 +137,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 				}
 				else {
 					player->send_move_packet(o);
-					WSA_OVER_EX* w_ex = new WSA_OVER_EX;
-					w_ex->_causeId = o_id;
-					w_ex->_iocpop = OP_AI_HELLO;
-					PostQueuedCompletionStatus(h_iocp, 1, o, &w_ex->_wsaover);
+					
 				}
 				if (before_wake == 0)
 				{
@@ -185,17 +182,17 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 			shared_lock<shared_mutex> lock(player->_vl);
 			for (auto& v_id : player->_view_list)
 			{
+				if (v_id < MAX_USER)
+					continue;
 				{
 					shared_lock<shared_mutex> slock(objects[v_id]->_s_lock);
 					if (objects[v_id]->_state != ST_INGAME)
 						continue;
 				}
-				if (v_id < MAX_USER)
-					continue;
 				
 				WSA_OVER_EX* w_ex = new WSA_OVER_EX;
 				w_ex->_causeId = o_id;
-				w_ex->_iocpop = OP_AI_DEFENCE;
+				w_ex->_iocpop = OP_NPC_DEFENCE;
 				PostQueuedCompletionStatus(h_iocp, 1, v_id, &w_ex->_wsaover);
 			}
 			
@@ -256,7 +253,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 			}
 			player->send_add_object_packet(objects[p_id]->_id);
 		}
-
+		player->_dmg = 10;
 		for (int i = player->_level - 1; i > 0; --i)
 		{
 			player->_dmg += i;
@@ -301,15 +298,23 @@ void WSA_OVER_EX::disconnect(int o_id)
 
 void WSA_OVER_EX::wake_up_npc(int n_id)
 {
-	EVENT ev(n_id, EV_RANDOM_MOVE, chrono::system_clock::now());
-	//l_q.lock();
-	timer_queue.push(ev);
+	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);
+	if(!npc->_is_batte)
+	{
+		EVENT ev(n_id, EV_RANDOM_MOVE, chrono::system_clock::now());
+		//l_q.lock();
+		timer_queue.push(ev);
+	}
+	else{
+		EVENT ev(n_id, EV_MOVE, chrono::system_clock::now());
+		//l_q.lock();
+		timer_queue.push(ev);
+	}
 	//l_q.unlock();
 }
 
 void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 {
-	cout << objects[n_id]->_x << endl;
 	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);
 	if (npc->_is_batte)
 	{
@@ -375,22 +380,6 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 			pl->send_add_object_packet(n_id);
 		}
 	}
-	//npc->_lua_lock.lock();
-	//lua_State* L = npc->_L;
-	//if (L != nullptr)
-	//{
-	//	lua_getglobal(L, "event_three_move");
-	//	int status = lua_pcall(L, 0, 0, 0);
-	//	//if (status != LUA_OK) {
-	//	//	const char* errorMessage = lua_tostring(L, -1);
-	//	//	//printf("Lua error: %s\n", errorMessage);
-	//	//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
-	//	//}
-	//	//lua_pop(L, 1);
-
-	//}
-	//npc->_lua_lock.unlock();
-	//
 	for (auto& p_id : old_vlist) {
 		if (0 == near_list.count(p_id)) {
 			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
@@ -559,7 +548,7 @@ int API_SendMessage(lua_State* L)
 	return 0;
 }
 
-int API_Attack(lua_State* L)
+int API_Defence(lua_State* L)
 {
 	int atk_id = (int)lua_tointeger(L, -2);
 	int def_id = (int)lua_tointeger(L, -1);
@@ -579,10 +568,6 @@ int API_Attack(lua_State* L)
 	
 	if (objects[def_id]->_hp <= 0)
 	{
-		if (def_id < MAX_USER)
-		{
-
-		}
 		if (def_id >= MAX_USER)
 		{
 			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
@@ -594,6 +579,25 @@ int API_Attack(lua_State* L)
 			npc->dead_NPC();
 		}
 	}
+	lua_pop(L, 3);
+	{
+		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
+		for (auto& p_id : objects[def_id]->_view_list) {
+			if (p_id >= MAX_USER)
+				continue;
+			Player* player = reinterpret_cast<Player*>(objects[p_id]);
+			player->send_change_hp(def_id);
+		}
+	}
+	return 0;
+}
+
+int API_Attack(lua_State* L)
+{
+	int atk_id = (int)lua_tointeger(L, -2);
+	int def_id = (int)lua_tointeger(L, -1);
+	
+	objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	lua_pop(L, 3);
 	{
 		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);

@@ -28,7 +28,7 @@ int g_myid;
 volatile bool login_success = false;
 sf::RenderWindow* g_window;
 sf::Font g_font;
-
+sf::Texture* hpTexture;
 class OBJECT {
 private:
 	bool m_showing;
@@ -49,9 +49,9 @@ public:
 		//m_sprite.setScale(0.5f, 0.5f);
 		m_sprite.setTextureRect(sf::IntRect(x, y, x2, y2));
 		set_name("NONAME");
-		sf::Texture hpTexture;
-		hpTexture.loadFromFile("hp_Image.png");
-		m_HP.setTexture(hpTexture);
+		
+		
+		m_HP.setTexture(*hpTexture);
 		m_HP.setColor(sf::Color::Green);
 		m_mess_end_time = chrono::system_clock::now();
 		hp = 0;
@@ -100,12 +100,9 @@ public:
 
 		if(hp > 0)
 		{
-			m_HP.setTextureRect(sf::IntRect(0, 0, (int)(120 * ((float)hp / _max_hp) * ((float)TILE_WIDTH / 64)), int((float)10 * ((float)TILE_WIDTH / 64))));
+			m_HP.setTextureRect(sf::IntRect(1, 1, (int)(120 * ((float)hp / _max_hp) * ((float)TILE_WIDTH / 64)), int((float)10 * ((float)TILE_WIDTH / 64))));
 			m_HP.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry + int(TILE_WIDTH) );
 			g_window->draw(m_HP);
-		}
-		else {
-			cout << hp << endl;
 		}
 		//
 	}
@@ -146,8 +143,10 @@ void client_initialize()
 {
 	board = new sf::Texture;
 	pieces = new sf::Texture;
+	hpTexture = new sf::Texture;
 	board->loadFromFile("chessmap.bmp");
 	pieces->loadFromFile("chess2.png");
+	hpTexture->loadFromFile("hp_Image.png");
 	if (false == g_font.loadFromFile("cour.ttf")) {
 		cout << "Font Loading Error!\n";
 		exit(-1);
@@ -317,7 +316,7 @@ void client_main()
 	}
 	if (recv_result != sf::Socket::NotReady)
 		if (received > 0) process_data(net_buf, received);
-
+	g_window->clear(sf::Color::Black);
 	for (int i = 0; i < SCREEN_WIDTH; ++i)
 		for (int j = 0; j < SCREEN_HEIGHT; ++j)
 		{

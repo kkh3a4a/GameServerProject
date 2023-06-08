@@ -30,7 +30,7 @@ extern int DB_prev_size;
 extern SOCKET DB_socket;
 ////////////
 
-enum EVENT_TYPE { EV_RANDOM_MOVE, EV_RESPAWN, EV_ATTACK, EV_HEAL, EV_MOVE};
+enum EVENT_TYPE { EV_RANDOM_MOVE, EV_RESPAWN, EV_ATTACK, EV_DEFENCE, EV_HEAL, EV_MOVE};
 
 constexpr int VIEW_RANGE = 6;
 extern  std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
@@ -46,7 +46,7 @@ enum IOCPOP
 	OP_NPC_RESPAWN,
 	OP_NPC_HEAL,
 	OP_NPC_ATTACK,
-	OP_AI_DEFENCE,
+	OP_NPC_DEFENCE,
 	OP_AI_HELLO,
 	OP_AI_BYE,
 	
@@ -92,6 +92,8 @@ int API_get_x(lua_State* L);
 int API_get_y(lua_State* L);
 
 int API_SendMessage(lua_State* L);
+
+int API_Defence(lua_State* L);
 
 int API_Attack(lua_State* L);
 ///////////////////////////////////////////////////////

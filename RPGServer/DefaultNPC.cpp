@@ -114,9 +114,20 @@ void NPC::move_NPC()
 {
 	if (_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
 		return;
+
+	if (objects[_last_attacker]->_hp <= 0)
+	{
+		EVENT ev{ _id, EV_RANDOM_MOVE,chrono::system_clock::now() + 1s };
+		//l_q.lock();
+		timer_queue.push(ev);
+		_last_attacker;
+		_is_batte = false;
+		return;
+	}
 	unordered_set<int> near_list;
 	unordered_set<int> old_vlist;
 	set<int> p_list;
+
 	zone_check(_x, _y, p_list);
 	for (auto& p_id : p_list) {
 		if (objects[p_id]->_state != ST_INGAME) continue;
@@ -128,19 +139,29 @@ void NPC::move_NPC()
 	int b_my_zoneY, b_my_zoneX;
 	b_my_zoneY = _y / ZONE_SEC;
 	b_my_zoneX = _x / ZONE_SEC;
-	if (objects[_last_attacker]->_x < _x)
+	if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
+	{
+		EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
+		timer_queue.push(ev);
+		
+
+		return;
+	}
+
+
+	if (objects[_last_attacker]->_x - _x < -1)
 	{
 		_x--;
 	}
-	else if (objects[_last_attacker]->_x > _x)
+	else if (objects[_last_attacker]->_x - _x > 1)
 	{
 		_x++;
 	}
-	if (objects[_last_attacker]->_y < _y)
+	if (objects[_last_attacker]->_y - _y < -1)
 	{
 		_y--;
 	}
-	else if (objects[_last_attacker]->_y > _y)
+	else if (objects[_last_attacker]->_y - _y > 1)
 	{
 		_y++;
 	}
@@ -175,22 +196,9 @@ void NPC::move_NPC()
 			pl->send_add_object_packet(_id);
 		}
 	}
-	//npc->_lua_lock.lock();
-	//lua_State* L = npc->_L;
-	//if (L != nullptr)
-	//{
-	//	lua_getglobal(L, "event_three_move");
-	//	int status = lua_pcall(L, 0, 0, 0);
-	//	//if (status != LUA_OK) {
-	//	//	const char* errorMessage = lua_tostring(L, -1);
-	//	//	//printf("Lua error: %s\n", errorMessage);
-	//	//	lua_pop(L, 1); // 오류 메시지를 스택에서 제거
-	//	//}
-	//	//lua_pop(L, 1);
 
-	//}
-	//npc->_lua_lock.unlock();
-	//
+	
+	
 	for (auto& p_id : old_vlist) {
 		if (0 == near_list.count(p_id)) {
 			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
@@ -217,9 +225,9 @@ void NPC::move_NPC()
 			return;
 	}
 
+
 	EVENT ev{ _id, EV_MOVE,chrono::system_clock::now() + 1s };
 	//l_q.lock();
 	timer_queue.push(ev);
 }
-
 

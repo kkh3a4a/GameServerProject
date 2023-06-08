@@ -14,10 +14,9 @@ public:
 	bool _is_batte = false;
 	lua_State* _L;
 	std::mutex _lua_lock;
-	chrono::system_clock::time_point _last_hello_time;
+	chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();
 	void dead_NPC();
 	void respawn_NPC();
 	void heal_NPC();
 	void move_NPC();
-
 };
