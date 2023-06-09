@@ -260,7 +260,6 @@ void ProcessPacket(char* ptr)
 		int other_id = packet->id;
 		players[other_id].hp = packet->hp;
 		players[other_id]._max_hp = packet->max_hp;
-		cout << other_id << " is HP : " << packet->hp << endl;
 		break;
 	}
 	default:
