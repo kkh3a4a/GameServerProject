@@ -15,6 +15,7 @@ concurrency::concurrent_priority_queue <EVENT> timer_queue;
 SOCKET DB_socket;
 WSA_OVER_EX DB_wsa_recv_over;
 int DB_prev_size = 0;
+std::map<std::pair<short, short>, short> Obstacle_Map;
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 
@@ -602,6 +603,11 @@ int API_Attack(lua_State* L)
 {
 	int atk_id = (int)lua_tointeger(L, -2);
 	int def_id = (int)lua_tointeger(L, -1);
+	if (objects[atk_id]->_hp <= 0)
+	{
+		lua_pop(L, 3);
+		return 0;
+	}
 	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
 	{
 		EVENT ev{ def_id, EV_HEAL, chrono::system_clock::now() + 5s };

@@ -29,15 +29,24 @@ volatile bool login_success = false;
 sf::RenderWindow* g_window;
 sf::Font g_font;
 sf::Texture* hpTexture;
+sf::Texture* clearTexture;
+float borderWidth = 2.0f;
+sf::Color borderColor = sf::Color::Black;
+sf::RectangleShape borderShape;
+sf::RectangleShape borderShape2;
+sf::Sprite m_Stamina;
+int stamina = 100;
+int max_stamina = 100;
 class OBJECT {
 private:
 	bool m_showing;
 	sf::Sprite m_sprite;
-	sf::Sprite m_HP;
+
 	sf::Text m_name;
 	sf::Text m_chat;
 	chrono::system_clock::time_point m_mess_end_time;
 public:
+	sf::Sprite m_HP;
 	int id;
 	int m_x, m_y;
 	int hp;
@@ -100,9 +109,41 @@ public:
 
 		if(hp > 0)
 		{
-			m_HP.setTextureRect(sf::IntRect(1, 1, (int)(120 * ((float)hp / _max_hp) * ((float)TILE_WIDTH / 64)), int((float)10 * ((float)TILE_WIDTH / 64))));
-			m_HP.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry + int(TILE_WIDTH) );
-			g_window->draw(m_HP);
+			if (id != g_myid)
+			{
+				m_HP.setTextureRect(sf::IntRect(1, 1, (int)(120 * ((float)hp / _max_hp) * ((float)TILE_WIDTH / 64)), int((float)10 * ((float)TILE_WIDTH / 64))));
+				m_HP.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry + int(TILE_WIDTH));
+				g_window->draw(m_HP);
+			}
+			else
+			{
+				
+				sf::Vector2f size((int)(120 * ((float)TILE_WIDTH / 24)), int((float)10 * ((float)TILE_WIDTH / 30)));
+				borderShape.setSize(size + sf::Vector2f(2 * borderWidth, 2 * borderWidth));
+				borderShape.setPosition(m_HP.getPosition() - sf::Vector2f(borderWidth, borderWidth));
+				borderShape.setFillColor(sf::Color::Transparent);
+				borderShape.setOutlineThickness(borderWidth);
+				borderShape.setOutlineColor(borderColor);
+				g_window->draw(borderShape);
+
+				sf::Vector2f size2((int)(120 * ((float)TILE_WIDTH / 24)), int((float)10 * ((float)TILE_WIDTH / 30)));
+				borderShape2.setSize(size + sf::Vector2f(2 * borderWidth, 2 * borderWidth));
+				borderShape2.setPosition(m_Stamina.getPosition() - sf::Vector2f(borderWidth, borderWidth));
+				borderShape2.setFillColor(sf::Color::Transparent);
+				borderShape2.setOutlineThickness(borderWidth);
+				borderShape2.setOutlineColor(borderColor);
+				g_window->draw(borderShape2);
+
+				m_Stamina.setTextureRect(sf::IntRect(1, 1, (int)(120 * ((float)stamina / max_stamina) * ((float)TILE_WIDTH / 24)), int((float)10 * ((float)TILE_WIDTH / 30))));
+				m_Stamina.setPosition(WINDOW_WIDTH / 2  + TILE_WIDTH , int(WINDOW_HEIGHT) - TILE_WIDTH * 2);
+				g_window->draw(m_Stamina);
+
+				m_HP.setTextureRect(sf::IntRect(1, 1, (int)(120 * ((float)hp / _max_hp) * ((float)TILE_WIDTH / 24)), int((float)10 * ((float)TILE_WIDTH / 30))));
+				m_HP.setPosition(WINDOW_WIDTH / 2 - TILE_WIDTH * 6, int(WINDOW_HEIGHT) - TILE_WIDTH * 2);
+				g_window->draw(m_HP);
+			}
+
+			
 		}
 		//
 	}
@@ -144,9 +185,11 @@ void client_initialize()
 	board = new sf::Texture;
 	pieces = new sf::Texture;
 	hpTexture = new sf::Texture;
+	clearTexture = new sf::Texture;
 	board->loadFromFile("chessmap.bmp");
 	pieces->loadFromFile("chess2.png");
 	hpTexture->loadFromFile("hp_Image.png");
+
 	if (false == g_font.loadFromFile("cour.ttf")) {
 		cout << "Font Loading Error!\n";
 		exit(-1);
@@ -156,6 +199,10 @@ void client_initialize()
 	avatar = OBJECT{ *pieces, 128, 0, 64, 64 };
 	avatar.set_Sprite_scale((float)TILE_WIDTH / 64, (float)TILE_WIDTH / 64);
 	avatar.move(4, 4);
+	avatar.m_HP.setTexture(*clearTexture);
+	avatar.m_HP.setColor(sf::Color(255, 0, 0 ,200));
+	m_Stamina.setTexture(*clearTexture);
+	m_Stamina.setColor(sf::Color(0,  0, 200, 200));
 }
 
 void client_finish()
@@ -256,10 +303,20 @@ void ProcessPacket(char* ptr)
 	}
 	case SC_HP_CHANGE:
 	{
+		
+
 		SC_HP_CHANGE_PACKET* packet = reinterpret_cast<SC_HP_CHANGE_PACKET*>(ptr);
+		
 		int other_id = packet->id;
-		players[other_id].hp = packet->hp;
-		players[other_id]._max_hp = packet->max_hp;
+		if (other_id == g_myid) {
+			avatar.hp = packet->hp;
+			avatar._max_hp = packet->max_hp;
+		}
+		else
+		{
+			players[other_id].hp = packet->hp;
+			players[other_id]._max_hp = packet->max_hp;
+		}
 		break;
 	}
 	default:
@@ -332,14 +389,16 @@ void client_main()
 				black_tile.a_draw();
 			}
 		}
-	avatar.draw();
+	
 	for (auto& pl : players) pl.second.draw();
 	sf::Text text;
 	text.setFont(g_font);
 	char buf[200];
 	sprintf_s(buf, "(%d, %d)", avatar.m_x, avatar.m_y);
 	text.setString(buf);
+	avatar.draw();
 	g_window->draw(text);
+
 }
 
 void send_packet(void* packet)
@@ -365,11 +424,11 @@ int main()
 	p.size = sizeof(p);
 	p.type = CS_LOGIN;
 
-	int my_id = 0;
+
 	cout << "insert my id : ";
-	cin >> my_id;
+	cin >> g_myid;
 	string player_name{ "P" };
-	player_name += to_string(my_id);
+	player_name += to_string(g_myid);
 
 	strcpy_s(p.name, player_name.c_str());
 	send_packet(&p);

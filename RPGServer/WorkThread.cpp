@@ -139,6 +139,12 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			if (objects[key]->_hp >= objects[key]->_max_hp)
 			{
 				objects[key]->_hp = objects[key]->_max_hp;
+				for (auto& p_id : objects[key]->_view_list) {
+					if (p_id >= MAX_USER)
+						continue;
+					Player* player = reinterpret_cast<Player*>(objects[p_id]);
+					player->send_change_hp(objects[key]->_id);
+				}
 				break;
 			}
 			for (auto& p_id : objects[key]->_view_list) {

@@ -13,7 +13,7 @@
 #include <concurrent_priority_queue.h>
 #include"include/lua.hpp"
 #include<string>
-
+#include<map>
 
 #pragma comment(lib, "lua54.lib")
 //#include"Zone.h"
@@ -29,7 +29,7 @@ extern int DB_prev_size;
 /////DB/////
 extern SOCKET DB_socket;
 ////////////
-
+extern std::map<std::pair<short, short>, short> Obstacle_Map;
 enum EVENT_TYPE { EV_RANDOM_MOVE, EV_RESPAWN, EV_ATTACK, EV_DEFENCE, EV_HEAL, EV_MOVE};
 
 constexpr int VIEW_RANGE = 6;
