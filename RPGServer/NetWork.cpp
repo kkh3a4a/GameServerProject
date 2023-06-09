@@ -258,6 +258,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		{
 			player->_dmg += i;
 		}
+		if (player->_hp != player->_max_hp)
+		{
+			EVENT ev{ player->_id, EV_HEAL, chrono::system_clock::now() + 5s };
+			//l_q.lock();
+			timer_queue.push(ev);
+		}
 		break;
 	}
 	default:
@@ -596,9 +602,25 @@ int API_Attack(lua_State* L)
 {
 	int atk_id = (int)lua_tointeger(L, -2);
 	int def_id = (int)lua_tointeger(L, -1);
-	
+	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
+	{
+		EVENT ev{ def_id, EV_HEAL, chrono::system_clock::now() + 5s };
+		//l_q.lock();
+		timer_queue.push(ev);
+	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	lua_pop(L, 3);
+	if (objects[def_id]->_hp <= 0)
+	{
+		Player* player = reinterpret_cast<Player*>(objects[def_id]);
+		player->dead_player();
+		if (atk_id >= MAX_USER)
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[atk_id]);
+			npc->_is_batte = false;
+		}
+	}
+
 	{
 		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
 		for (auto& p_id : objects[def_id]->_view_list) {

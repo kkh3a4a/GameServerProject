@@ -12,8 +12,8 @@ public:
 	int		_db_id;
 	int		_exp;
 	int		_movecount = 0;
-	
-
+	chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();
+	chrono::system_clock::time_point _last_dead_time = chrono::system_clock::now();
 	Player(int id, S_STATE _state);
 	~Player();
 
@@ -27,4 +27,5 @@ public:
 	void send_change_hp(int o_id);
 	void send_location_DB();
 	void kill_NPC(int n_id);
+	void dead_player();
 };

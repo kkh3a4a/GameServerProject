@@ -1,7 +1,7 @@
 #include "WorkThread.h"
-
+#include <mutex>
 using namespace std;
-
+mutex ml;
 
 void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 {
@@ -47,12 +47,14 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 
 		case OP_RECV: {
 			int remain_data = num_bytes + _prev_size;
+			char* buf = ex_over->_buf;
 			short* p = reinterpret_cast<short*>(ex_over->_buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
 				if (packet_size <= remain_data) {
 					ex_over->processpacket(static_cast<int>(key), p, w_id);
-					p = p + packet_size;
+					buf = buf + packet_size;
+					p = reinterpret_cast<short*>(buf);
 					remain_data = remain_data - packet_size;
 				}
 				else break;

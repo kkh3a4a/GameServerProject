@@ -48,11 +48,11 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk, int w_id)
 		
 		break;
 	}
-	case SD_PLAYER_CHANGE_EXP:
+	case SD_PLAYER_CHANGE_STAT:
 	{
-		SD_PLAYER_CHANGE_EXP_PACKET* packet = reinterpret_cast<SD_PLAYER_CHANGE_EXP_PACKET*>(pk);
+		SD_PLAYER_CHANGE_STAT_PACKET* packet = reinterpret_cast<SD_PLAYER_CHANGE_STAT_PACKET*>(pk);
 
-		player_change_exp(w_id, packet->s_id, packet->id, packet->exp, packet->level, packet->max_hp);
+		player_change_state(w_id, packet->id, packet->exp, packet->level, packet->hp, packet->max_hp);
 		break;
 	}
 	case SD_PLAYER_LOCATION:
@@ -66,7 +66,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk, int w_id)
 	}
 	default:
 	{
-		DebugBreak();
+		cout << "Àß¸øµÈ packet" << endl;
 		break;
 	}
 	}
@@ -263,13 +263,13 @@ void player_change_location(int w_id, int id, int x, int y)
 	}
 }
 
-void player_change_exp(int w_id, int s_id, int id, int exp, int level , int	max_hp)
+void player_change_state(int w_id, int id, int exp, int level, int hp, int max_hp)
 {
 	auto retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc[w_id], &hstmt[w_id]);
 	
 	{
 		SQLWCHAR query[100];
-    		swprintf(query, 100, L"EXEC Exp_User %d, %d, %d, %d", id, exp, level, max_hp);
+    		swprintf(query, 100, L"EXEC STAT_User %d, %d, %d, %d, %d", id, exp, level, hp, max_hp);
 		int retcode = SQLExecDirect(hstmt[w_id], query, SQL_NTS);
 		if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO)
 		{

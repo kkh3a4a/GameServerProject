@@ -114,13 +114,12 @@ void NPC::move_NPC()
 {
 	if (_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
 		return;
-
-	if (objects[_last_attacker]->_hp <= 0)
+	Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
+	if (pl->_last_dead_time > chrono::system_clock::now() - 3s)
 	{
 		EVENT ev{ _id, EV_RANDOM_MOVE,chrono::system_clock::now() + 1s };
 		//l_q.lock();
 		timer_queue.push(ev);
-		_last_attacker;
 		_is_batte = false;
 		return;
 	}

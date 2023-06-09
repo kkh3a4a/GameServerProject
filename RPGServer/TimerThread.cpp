@@ -66,12 +66,16 @@ void TimerThread()
 		}
 		case EV_HEAL:
 		{
-			int npc_id = _event._o_id;
+			int _id = _event._o_id;
+			if (objects[_id]->_state != ST_INGAME)
+			{
+				break;
+			}
 			WSA_OVER_EX* over = new WSA_OVER_EX(OP_NPC_HEAL, 0, 0);
 			ZeroMemory(&over->_wsaover, sizeof(over->_wsaover));
 			over->_iocpop = OP_NPC_HEAL;
 			over->_e_type = _event._e_type;
-			PostQueuedCompletionStatus(h_iocp, 1, npc_id, &over->_wsaover);
+			PostQueuedCompletionStatus(h_iocp, 1, _id, &over->_wsaover);
 			break;
 		}
 		case EV_DEFENCE:

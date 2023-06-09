@@ -66,12 +66,14 @@ void worker_thread(WSA_OVER_EX g_a_over)
 
 			Player* player = reinterpret_cast<Player*>(objects[key]);
 			int remain_data = num_bytes + player->_prev_size;
+			char* buf = ex_over->_buf;
 			short* p = reinterpret_cast<short*>(ex_over->_buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
 				if (packet_size <= remain_data) {
 					ex_over->processpacket(static_cast<int>(key), p);
-					p = p + packet_size;
+					buf = buf + packet_size;
+					p = reinterpret_cast<short*>(buf);
 					remain_data = remain_data - packet_size;
 				}
 				else break;
@@ -128,24 +130,24 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		}
 		case OP_NPC_HEAL:
 		{
-			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
-			if (npc->_hp <= 0)
+			
+			if (objects[key]->_hp <= 0)
 			{
 				break;
 			}
-			npc->_hp += npc->_max_hp / 10;
-			if (npc->_hp >= npc->_max_hp)
+			objects[key]->_hp += objects[key]->_max_hp / 10;
+			if (objects[key]->_hp >= objects[key]->_max_hp)
 			{
-				npc->_hp = npc->_max_hp;
+				objects[key]->_hp = objects[key]->_max_hp;
 				break;
 			}
-			for (auto& p_id : npc->_view_list) {
+			for (auto& p_id : objects[key]->_view_list) {
 				if (p_id >= MAX_USER)
 					continue;
 				Player* player = reinterpret_cast<Player*>(objects[p_id]);
-				player->send_change_hp(npc->_id);
+				player->send_change_hp(objects[key]->_id);
 			}
-			EVENT ev{ npc->_id, EV_HEAL, chrono::system_clock::now() + 5s };
+			EVENT ev{ objects[key]->_id, EV_HEAL, chrono::system_clock::now() + 5s };
 			//l_q.lock();
 			timer_queue.push(ev);
 			break;
