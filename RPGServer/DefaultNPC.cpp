@@ -269,7 +269,7 @@ void NPC::move_NPC()
 					{
 						move_queue.push(make_pair(_x + j, _y));
 					}
-					move_queue.push(make_pair(_x + i, _y));
+					move_queue.push(make_pair(_x + i, y));
 				}
 				else
 				{
@@ -277,7 +277,7 @@ void NPC::move_NPC()
 					{
 						move_queue.push(make_pair(_x + j, _y));
 					}
-					move_queue.push(make_pair(_x + i, _y));
+					move_queue.push(make_pair(_x + i, y));
 				}
 
 			}
@@ -310,7 +310,7 @@ void NPC::move_NPC()
 				}
 				if (i > 0)
 				{
-					for (int j = 1; j <= i + 1; ++j)
+					for (int j = 1; j <= i; ++j)
 					{
 						move_queue.push(make_pair(_x, _y + j));
 					}

@@ -107,16 +107,52 @@ void createMap() {
 		std::mt19937 rng(rd());
 		std::uniform_int_distribution<int> dist(1, 1999);
 
-		std::set<std::pair<int, int>> uniquePairs;
+		std::map<std::pair<int, int>,int> uniquePairs;
 
 		while (uniquePairs.size() < 20000) {
-			int num1 = dist(rng);
-			int num2 = dist(rng);
-			uniquePairs.insert(std::make_pair(num1, num2));
+			if(rand() % 8 < 4)
+			{
+				int num1 = dist(rng);
+				int num2 = dist(rng);
+				int type = 1;
+				uniquePairs[make_pair(num1, num2)] = type;
+			}
+			else if(rand() % 8 == 4)
+			{
+				int num1 = dist(rng);
+				int num2 = dist(rng);
+				int type = 2;
+				for(int i = 0; i< 3;++i)
+					uniquePairs[make_pair(num1 + i, num2)] = type;				
+			}
+			else if (rand() % 8 == 5)
+			{
+				int num1 = dist(rng);
+				int num2 = dist(rng);
+				int type = 3;
+				for (int i = 0; i < 3; ++i)
+					uniquePairs[make_pair(num1, num2 + i)] = type;
+			}
+			else if (rand() % 8 == 6)
+			{
+				int num1 = dist(rng);
+				int num2 = dist(rng);
+				int type = 4;
+				for (int i = 0; i < 5; ++i)
+					uniquePairs[make_pair(num1 + i, num2)] = type;
+			}
+			else if (rand() % 8 == 7)
+			{
+				int num1 = dist(rng);
+				int num2 = dist(rng);
+				int type = 4;
+				for (int i = 0; i < 5; ++i)
+					uniquePairs[make_pair(num1, num2 + i)] = type;
+			}
 		}
 
-		for (const auto& pair : uniquePairs) {
-			file << pair.first << " " << pair.second << std::endl;
+		for (const auto& maps : uniquePairs) {
+			file << maps.first.first << " " << maps.first.second << " " << maps.second <<std::endl;
 		}
 
 		std::cout << "중복이 없는 랜덤한 숫자 pair를 파일에 저장하고 파일을 닫았습니다." << std::endl;
@@ -132,15 +168,12 @@ void ReadMap() {
 	std::string line;
 	while (std::getline(file, line)) {
 		std::istringstream iss(line);
-		short x, y;
-		if (iss >> x >> y) {
-			if (x == 1000)
-			World_Map[std::make_pair(x, y)] = 1;
+		short x, y, type;
+		if (iss >> x >> y >> type) {
+			World_Map[std::make_pair(x, y)] = type;
 		}
 	}
 	file.close();
-
-
 }
 
 

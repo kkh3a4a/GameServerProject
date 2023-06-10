@@ -437,9 +437,9 @@ int main()
 		std::string line;
 		while (std::getline(file, line)) {
 			std::istringstream iss(line);
-			short x, y;
-			if (iss >> x >> y) {
-				World_Map[std::make_pair(x, y)] = 1;
+			short x, y, type;
+			if (iss >> x >> y >> type) {
+				World_Map[std::make_pair(x, y)] = type;
 			}
 		}
 	}
