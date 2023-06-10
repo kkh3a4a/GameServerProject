@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <Windows.h>
 #include <chrono>
+#include <fstream>
+#include <sstream>
+#include <string>
 using namespace std;
 
 #pragma comment (lib, "opengl32.lib")
@@ -35,8 +38,14 @@ sf::Color borderColor = sf::Color::Black;
 sf::RectangleShape borderShape;
 sf::RectangleShape borderShape2;
 sf::Sprite m_Stamina;
+
+sf::Sprite m_Obstacle1;
+
+
 int stamina = 100;
 int max_stamina = 100;
+std::map<std::pair<short, short>, short> World_Map;
+
 class OBJECT {
 private:
 	bool m_showing;
@@ -203,6 +212,9 @@ void client_initialize()
 	avatar.m_HP.setColor(sf::Color(255, 0, 0 ,200));
 	m_Stamina.setTexture(*clearTexture);
 	m_Stamina.setColor(sf::Color(0,  0, 200, 200));
+	m_Obstacle1.setTexture(*clearTexture);
+	m_Obstacle1.setColor(sf::Color(255, 0, 0, 255));
+	m_Obstacle1.setTextureRect(sf::IntRect(0, 0, TILE_WIDTH, TILE_WIDTH));
 }
 
 void client_finish()
@@ -379,14 +391,24 @@ void client_main()
 			int tile_x = i + g_left_x;
 			int tile_y = j + g_top_y;
 			if ((tile_x < 0) || (tile_y < 0)) continue;
-			if (0 == (tile_x / 3 + tile_y / 3) % 2) {
-				white_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
-				white_tile.a_draw();
+			std::pair<short, short> key(tile_x, tile_y);
+			if(World_Map.find(key) == World_Map.end())
+			{
+				if (0 == (tile_x / 3 + tile_y / 3) % 2) {
+					white_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
+					white_tile.a_draw();
+				}
+				else
+				{
+					black_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
+					black_tile.a_draw();
+				}
 			}
 			else
 			{
-				black_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
-				black_tile.a_draw();
+
+				m_Obstacle1.setPosition((float)TILE_WIDTH * i, (float)TILE_WIDTH * j);
+				g_window->draw(m_Obstacle1);
 			}
 		}
 	
@@ -410,6 +432,18 @@ void send_packet(void* packet)
 
 int main()
 {
+	std::ifstream file("../World_Map.txt");
+	if (file.is_open()) {
+		std::string line;
+		while (std::getline(file, line)) {
+			std::istringstream iss(line);
+			short x, y;
+			if (iss >> x >> y) {
+				World_Map[std::make_pair(x, y)] = 1;
+			}
+		}
+	}
+	file.close();
 	wcout.imbue(locale("korean"));
 	sf::Socket::Status status = s_socket.connect("127.0.0.1", PORT_NUM);
 	s_socket.setBlocking(false);

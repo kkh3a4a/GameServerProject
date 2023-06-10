@@ -5,7 +5,9 @@
 #include"Zone.h"
 #include"DefaultNPC.h"
 #include <concurrent_unordered_set.h>
-
+#include<fstream>
+#include<random>
+#include <sstream>
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 using namespace std;
@@ -97,6 +99,49 @@ void connect_DB() {
 	
 }
 
+void createMap() {
+	std::ofstream file("../World_Map.txt", std::ios::app); // 파일 열기 (이어쓰기 모드)
+
+	if (file.is_open()) {
+		std::random_device rd;
+		std::mt19937 rng(rd());
+		std::uniform_int_distribution<int> dist(1, 1999);
+
+		std::set<std::pair<int, int>> uniquePairs;
+
+		while (uniquePairs.size() < 20000) {
+			int num1 = dist(rng);
+			int num2 = dist(rng);
+			uniquePairs.insert(std::make_pair(num1, num2));
+		}
+
+		for (const auto& pair : uniquePairs) {
+			file << pair.first << " " << pair.second << std::endl;
+		}
+
+		std::cout << "중복이 없는 랜덤한 숫자 pair를 파일에 저장하고 파일을 닫았습니다." << std::endl;
+		file.close(); // 파일 닫기
+	}
+	else {
+		std::cout << "파일을 열지 못했습니다." << std::endl;
+	}
+}
+void ReadMap() {
+	
+	std::ifstream file("../World_Map.txt");
+	std::string line;
+	while (std::getline(file, line)) {
+		std::istringstream iss(line);
+		short x, y;
+		if (iss >> x >> y) {
+			World_Map[std::make_pair(x, y)] = 1;
+		}
+	}
+	file.close();
+
+
+}
+
 
 int main() {
 	initObject();
@@ -119,6 +164,7 @@ int main() {
 	g_a_over._iocpop = OP_ACCEPT;
 	AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
 	connect_DB();
+	ReadMap();
 	initialize_npc();
 	thread timer_thread{ TimerThread };
 	vector <thread> worker_threads;

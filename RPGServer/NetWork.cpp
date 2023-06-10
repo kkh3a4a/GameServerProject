@@ -15,7 +15,7 @@ concurrency::concurrent_priority_queue <EVENT> timer_queue;
 SOCKET DB_socket;
 WSA_OVER_EX DB_wsa_recv_over;
 int DB_prev_size = 0;
-std::map<std::pair<short, short>, short> Obstacle_Map;
+std::map<std::pair<short, short>, short> World_Map;
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 
@@ -74,102 +74,105 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		case 2: if (x > 0) x--; break;
 		case 3: if (x < W_WIDTH - 1) x++; break;
 		}
-		
-		player->_x = x;
-		player->_y = y;
-		int my_zoneY, my_zoneX;
-		my_zoneY = player->_y / ZONE_SEC;
-		my_zoneX = player->_x / ZONE_SEC;
-
-		if (my_zoneX != b_my_zoneX || my_zoneY != b_my_zoneY)
+		if (World_Map.find(make_pair(x, y)) == World_Map.end())
 		{
-			zone[b_my_zoneY][b_my_zoneX]->REMOVE(player->_id);
-			zone[my_zoneY][my_zoneX]->ADD(player->_id);
-		}
 
-		unordered_set <int> old_vl;
-		{
-			std::shared_lock<std::shared_mutex> lock(player->_vl);
-			old_vl = player->_view_list;
-		}
+			player->_x = x;
+			player->_y = y;
+			int my_zoneY, my_zoneX;
+			my_zoneY = player->_y / ZONE_SEC;
+			my_zoneX = player->_x / ZONE_SEC;
 
-		unordered_set <int> new_vl;
-
-		set<int> z_list;
-		zone_check(player->_x, player->_y, z_list);
-		for (auto& p_id : z_list) {
+			if (my_zoneX != b_my_zoneX || my_zoneY != b_my_zoneY)
 			{
-				std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
-				if (objects[p_id]->_state != ST_INGAME)
+				zone[b_my_zoneY][b_my_zoneX]->REMOVE(player->_id);
+				zone[my_zoneY][my_zoneX]->ADD(player->_id);
+			}
+
+			unordered_set <int> old_vl;
+			{
+				std::shared_lock<std::shared_mutex> lock(player->_vl);
+				old_vl = player->_view_list;
+			}
+
+			unordered_set <int> new_vl;
+
+			set<int> z_list;
+			zone_check(player->_x, player->_y, z_list);
+			for (auto& p_id : z_list) {
 				{
-					lock.unlock();
-					continue;
+					std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
+					if (objects[p_id]->_state != ST_INGAME)
+					{
+						lock.unlock();
+						continue;
+					}
+				}
+				if (objects[p_id]->_id == o_id) continue;
+				if (can_see(objects[p_id]->_id, o_id)) {
+					new_vl.insert(objects[p_id]->_id);
 				}
 			}
-			if (objects[p_id]->_id == o_id) continue;
-			if (can_see(objects[p_id]->_id, o_id)) {
-				new_vl.insert(objects[p_id]->_id);
-			}
-		}
 
 
-		for (auto& o : new_vl) {
-			if (!is_NPC(o))
-			{
-				Player* pl = reinterpret_cast<Player*>(objects[o]);
-
-				if (old_vl.count(o) == 0) {
-					pl->send_add_object_packet(o_id);
-					player->send_add_object_packet(o);
-				}
-				else {
-					pl->send_move_packet(o_id);
-					player->send_move_packet(o);
-				}
-			}
-			else
-			{
-				NPC* nl = reinterpret_cast<NPC*>(objects[o]);
-				
-				bool before_wake = nl->_n_wake;
-				if (old_vl.count(o) == 0) {
-					nl->add_objects(o_id);
-					player->send_add_object_packet(o);
-				}
-				else {
-					player->send_move_packet(o);
-					
-				}
-				if (before_wake == 0)
+			for (auto& o : new_vl) {
+				if (!is_NPC(o))
 				{
-					if (CAS(reinterpret_cast<volatile int*>(&nl->_n_wake), before_wake, 1))
-						wake_up_npc(o);
-				}
-			}
-		}
-		player->send_move_packet(o_id);
+					Player* pl = reinterpret_cast<Player*>(objects[o]);
 
-		for (auto& p_id : old_vl) {
-			if (objects[p_id]->_state != ST_INGAME) continue;
-			if (objects[p_id]->_id == o_id) continue;
-			if (new_vl.count(p_id) == 0)
-			{
-				player->send_remove_object_packet(p_id);
-				if (!is_NPC(p_id))
-				{
-					Player* pl = reinterpret_cast<Player*>(objects[p_id]);
-					pl->send_remove_object_packet(o_id);
+					if (old_vl.count(o) == 0) {
+						pl->send_add_object_packet(o_id);
+						player->send_add_object_packet(o);
+					}
+					else {
+						pl->send_move_packet(o_id);
+						player->send_move_packet(o);
+					}
 				}
-				else {
-					NPC* npc = reinterpret_cast<NPC*>(objects[p_id]);
+				else
+				{
+					NPC* nl = reinterpret_cast<NPC*>(objects[o]);
+
+					bool before_wake = nl->_n_wake;
+					if (old_vl.count(o) == 0) {
+						nl->add_objects(o_id);
+						player->send_add_object_packet(o);
+					}
+					else {
+						player->send_move_packet(o);
+
+					}
+					if (before_wake == 0)
+					{
+						if (CAS(reinterpret_cast<volatile int*>(&nl->_n_wake), before_wake, 1))
+							wake_up_npc(o);
+					}
 				}
 			}
-		}
-		player->_movecount++;
-		if (player->_movecount > 5)
-		{
-			player->_movecount = 0;
-			player->send_location_DB();
+			player->send_move_packet(o_id);
+
+			for (auto& p_id : old_vl) {
+				if (objects[p_id]->_state != ST_INGAME) continue;
+				if (objects[p_id]->_id == o_id) continue;
+				if (new_vl.count(p_id) == 0)
+				{
+					player->send_remove_object_packet(p_id);
+					if (!is_NPC(p_id))
+					{
+						Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+						pl->send_remove_object_packet(o_id);
+					}
+					else {
+						NPC* npc = reinterpret_cast<NPC*>(objects[p_id]);
+					}
+				}
+			}
+			player->_movecount++;
+			if (player->_movecount > 5)
+			{
+				player->_movecount = 0;
+				player->send_location_DB();
+			}
 		}
 
 
@@ -354,63 +357,66 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 	case 2: if (x > 0) x--; break;
 	case 3: if (x < W_WIDTH - 1) x++; break;
 	}
-	npc->_x = x;
-	npc->_y = y;
-	int my_zoneY, my_zoneX;
-	my_zoneY = npc->_y / ZONE_SEC;
-	my_zoneX = npc->_x / ZONE_SEC;
-	if (my_zoneX != b_my_zoneX || my_zoneY != b_my_zoneY)
+	if (World_Map.find(make_pair(x, y)) == World_Map.end())
 	{
-		zone[b_my_zoneY][b_my_zoneX]->REMOVE(npc->_id);
-		zone[my_zoneY][my_zoneX]->ADD(npc->_id);
-	}
-
-	set<int> z_list;
-	zone_check(npc->_x, npc->_y, z_list);
-	for (auto& p_id : z_list) {
-		if (p_id >= MAX_USER)
-			break;
-		Player* pl = reinterpret_cast<Player*>( objects[p_id]);
-		if (pl->_state != ST_INGAME) continue;
-		if (can_see(pl->_id, n_id))
-			near_list.insert(pl->_id);
-	}
-	for (auto& p_id : near_list) {
-		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
-		std::shared_lock<std::shared_mutex> lock(pl->_vl);
-		if (pl->_view_list.count(n_id)) {
-			lock.unlock();
-			pl->send_move_packet(n_id);
-		}
-		else {
-			lock.unlock();
-			pl->send_add_object_packet(n_id);
-		}
-	}
-	for (auto& p_id : old_vlist) {
-		if (0 == near_list.count(p_id)) {
-			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
-			pl->send_remove_object_packet(n_id);
-		}
-	}
-
-
-	if (near_list.size() == 0)
-	{
-		bool before_wake = npc->_n_wake;
-		if (before_wake == 1)
+		npc->_x = x;
+		npc->_y = y;
+		int my_zoneY, my_zoneX;
+		my_zoneY = npc->_y / ZONE_SEC;
+		my_zoneX = npc->_x / ZONE_SEC;
+		if (my_zoneX != b_my_zoneX || my_zoneY != b_my_zoneY)
 		{
-			if (!CAS(reinterpret_cast<volatile int*>(&npc->_n_wake), before_wake, 0))
-			{
+			zone[b_my_zoneY][b_my_zoneX]->REMOVE(npc->_id);
+			zone[my_zoneY][my_zoneX]->ADD(npc->_id);
+		}
 
+		set<int> z_list;
+		zone_check(npc->_x, npc->_y, z_list);
+		for (auto& p_id : z_list) {
+			if (p_id >= MAX_USER)
+				break;
+			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			if (pl->_state != ST_INGAME) continue;
+			if (can_see(pl->_id, n_id))
+				near_list.insert(pl->_id);
+		}
+		for (auto& p_id : near_list) {
+			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			std::shared_lock<std::shared_mutex> lock(pl->_vl);
+			if (pl->_view_list.count(n_id)) {
+				lock.unlock();
+				pl->send_move_packet(n_id);
+			}
+			else {
+				lock.unlock();
+				pl->send_add_object_packet(n_id);
+			}
+		}
+		for (auto& p_id : old_vlist) {
+			if (0 == near_list.count(p_id)) {
+				Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+				pl->send_remove_object_packet(n_id);
+			}
+		}
+
+
+		if (near_list.size() == 0)
+		{
+			bool before_wake = npc->_n_wake;
+			if (before_wake == 1)
+			{
+				if (!CAS(reinterpret_cast<volatile int*>(&npc->_n_wake), before_wake, 0))
+				{
+
+				}
+				else
+				{
+					return;
+				}
 			}
 			else
-			{
 				return;
-			}
 		}
-		else
-			return;
 	}
 
 	EVENT ev{ n_id, EV_RANDOM_MOVE,chrono::system_clock::now() + 1s };
