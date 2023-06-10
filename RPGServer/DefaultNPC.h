@@ -12,6 +12,7 @@ public:
 	int _spawn_x = 0, _spawn_y = 0;
 	int _last_attacker = 0;
 	bool _is_batte = false;
+	concurrency::concurrent_queue<pair<int, int>> move_queue;
 	lua_State* _L;
 	std::mutex _lua_lock;
 	chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();

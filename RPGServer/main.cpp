@@ -134,6 +134,7 @@ void ReadMap() {
 		std::istringstream iss(line);
 		short x, y;
 		if (iss >> x >> y) {
+			if (x == 1000)
 			World_Map[std::make_pair(x, y)] = 1;
 		}
 	}
