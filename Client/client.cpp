@@ -24,7 +24,7 @@ constexpr auto SCREEN_HEIGHT = 16;
 constexpr auto TILE_WIDTH = 40;
 constexpr auto WINDOW_WIDTH = SCREEN_WIDTH * TILE_WIDTH;   // size of window
 constexpr auto WINDOW_HEIGHT = SCREEN_WIDTH * TILE_WIDTH;
-
+bool isEnter = false;
 int g_left_x;
 int g_top_y;
 int g_myid;
@@ -33,14 +33,18 @@ sf::RenderWindow* g_window;
 sf::Font g_font;
 sf::Texture* hpTexture;
 sf::Texture* clearTexture;
+sf::Texture* fire;
+sf::Texture* stone;
+sf::Texture* wood;
 float borderWidth = 2.0f;
 sf::Color borderColor = sf::Color::Black;
 sf::RectangleShape borderShape;
 sf::RectangleShape borderShape2;
 sf::Sprite m_Stamina;
-
-sf::Sprite m_Obstacle1;
-
+sf::Sprite m_fire;
+sf::Sprite m_Stone;
+sf::Sprite m_Wood;
+sf::Sprite chat;
 
 int stamina = 100;
 int max_stamina = 100;
@@ -53,8 +57,9 @@ private:
 
 	sf::Text m_name;
 	sf::Text m_chat;
-	chrono::system_clock::time_point m_mess_end_time;
+	
 public:
+	chrono::system_clock::time_point m_mess_end_time;
 	sf::Sprite m_HP;
 	int id;
 	int m_x, m_y;
@@ -112,8 +117,17 @@ public:
 			g_window->draw(m_name);
 		}
 		else {
-			m_chat.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - 10);
+			chat.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry - TILE_WIDTH);
+			int text = (int)((m_chat.getString().getSize() - m_name.getString().getSize() - 1));
+			if (text < 6)
+				text = 6;
+			chat.setTextureRect(sf::IntRect(0, 0, (float)text * (TILE_WIDTH / 3), int((float)50 * ((float)TILE_WIDTH / 40))));
+			g_window->draw(chat);
+
+			m_chat.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - TILE_WIDTH);
 			g_window->draw(m_chat);
+			
+			
 		}
 
 		if(hp > 0)
@@ -166,14 +180,39 @@ public:
 	}
 
 	void set_chat(const char str[]) {
+		int length = std::strlen(str);
+		string msg(str, length);
+		string temp_name = m_name.getString();
+		/*temp_name.resize(temp_name.size() + 1);
+		temp_name[temp_name.size()] = '\n';*/
+		temp_name += ":";
+		temp_name += "\n";
+		msg.insert(0, temp_name);
+
 		m_chat.setFont(g_font);
-		m_chat.setString(str);
+		m_chat.setString(msg);
 		m_chat.setFillColor(sf::Color(255, 255, 255));
 		m_chat.setCharacterSize(TILE_WIDTH / 2);
 		m_chat.setStyle(sf::Text::Bold);
 		
 		m_mess_end_time = chrono::system_clock::now() + chrono::seconds(3);
 	}
+	void set_chat2(string str) {
+		string msg = str;
+		string temp_name = m_name.getString();
+		/*temp_name.resize(temp_name.size() + 1);
+		temp_name[temp_name.size()] = '\n';*/
+		temp_name += ":";
+		temp_name += "\n";
+		msg.insert(0, temp_name);
+
+		m_chat.setFont(g_font);
+		m_chat.setString(msg);
+		m_chat.setFillColor(sf::Color(255, 255, 255));
+		m_chat.setCharacterSize(TILE_WIDTH / 2);
+		m_chat.setStyle(sf::Text::Bold);
+	}
+
 	void set_Sprite_scale(float x, float y)
 	{
 		m_sprite.setScale(x, y);
@@ -195,10 +234,15 @@ void client_initialize()
 	pieces = new sf::Texture;
 	hpTexture = new sf::Texture;
 	clearTexture = new sf::Texture;
+	fire = new sf::Texture;
+	stone = new sf::Texture;
+	wood = new sf::Texture;
 	board->loadFromFile("chessmap.bmp");
 	pieces->loadFromFile("chess2.png");
 	hpTexture->loadFromFile("hp_Image.png");
-
+	fire->loadFromFile("fire.png");
+	stone->loadFromFile("stone.png");
+	wood->loadFromFile("wood.png");
 	if (false == g_font.loadFromFile("cour.ttf")) {
 		cout << "Font Loading Error!\n";
 		exit(-1);
@@ -210,11 +254,34 @@ void client_initialize()
 	avatar.move(4, 4);
 	avatar.m_HP.setTexture(*clearTexture);
 	avatar.m_HP.setColor(sf::Color(255, 0, 0 ,200));
+	chat.setTexture(*clearTexture);
+	chat.setColor(sf::Color(25, 25, 25,200));
 	m_Stamina.setTexture(*clearTexture);
 	m_Stamina.setColor(sf::Color(0,  0, 200, 200));
-	m_Obstacle1.setTexture(*clearTexture);
-	m_Obstacle1.setColor(sf::Color(255, 0, 0, 255));
-	m_Obstacle1.setTextureRect(sf::IntRect(0, 0, TILE_WIDTH, TILE_WIDTH));
+
+	{
+		
+		m_fire.setTexture(*fire);
+		sf::Vector2u originalSize = fire->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_fire.setScale(scale);
+	}
+
+	{
+		m_Stone.setTexture(*stone);
+		sf::Vector2u originalSize = stone->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_Stone.setScale(scale);
+	}
+	{
+		m_Wood.setTexture(*wood);
+		sf::Vector2u originalSize = wood->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_Wood.setScale(scale);
+	}
+
+
+	//m_Stone.setTextureRect(sf::IntRect(0,0, TILE_WIDTH, TILE_WIDTH));
 }
 
 void client_finish()
@@ -392,7 +459,7 @@ void client_main()
 			int tile_y = j + g_top_y;
 			if ((tile_x < 0) || (tile_y < 0)) continue;
 			std::pair<short, short> key(tile_x, tile_y);
-			if(World_Map.find(key) == World_Map.end())
+			
 			{
 				if (0 == (tile_x / 3 + tile_y / 3) % 2) {
 					white_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
@@ -404,11 +471,23 @@ void client_main()
 					black_tile.a_draw();
 				}
 			}
-			else
+			if (World_Map.find(key) != World_Map.end())
 			{
-
-				m_Obstacle1.setPosition((float)TILE_WIDTH * i, (float)TILE_WIDTH * j);
-				g_window->draw(m_Obstacle1);
+				if (World_Map[key] == 1)
+				{
+					m_fire.setPosition((float)TILE_WIDTH * i, (float)TILE_WIDTH * j);
+					g_window->draw(m_fire);
+				}
+				else if (World_Map[key] == 2 || World_Map[key] == 3)
+				{
+					m_Stone.setPosition((float)TILE_WIDTH * i, (float)TILE_WIDTH * j);
+					g_window->draw(m_Stone);
+				}
+				else if(World_Map[key] == 4 || World_Map[key] == 5)
+				{
+					m_Wood.setPosition((float)TILE_WIDTH * i, (float)TILE_WIDTH * j);
+					g_window->draw(m_Wood);
+				}
 			}
 		}
 	
@@ -426,6 +505,7 @@ void client_main()
 void send_packet(void* packet)
 {
 	unsigned short* p = reinterpret_cast<unsigned short*>(packet);
+
 	size_t sent = 0;
 	s_socket.send(packet, p[0], sent);
 }
@@ -470,54 +550,105 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "2D CLIENT");
 	g_window = &window;
+	
+	std::string msg;
+	window.setKeyRepeatEnabled(false);
+	int KeySize = 0;
 	while (window.isOpen())
 	{
 		sf::Event event;
+		if (isEnter)
+			avatar.m_mess_end_time = chrono::system_clock::now() + chrono::milliseconds(50);
 		while (window.pollEvent(event))
 		{
+			
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == sf::Event::KeyPressed) {
-				int direction = -1;
-				bool attack = false;
-				switch (event.key.code) {
-				case sf::Keyboard::Left:
-					direction = 2;
-					break;
-				case sf::Keyboard::Right:
-					direction = 3;
-					break;
-				case sf::Keyboard::Up:
-					direction = 0;
-					break;
-				case sf::Keyboard::Down:
-					direction = 1;
-					break;
-				case  sf::Keyboard::Space:
-					attack = true;
-					break;
-				case sf::Keyboard::Escape:
-					window.close();
-					break;
-				}
-				if (-1 != direction) {
-					CS_MOVE_PACKET p;
-					p.size = sizeof(p);
-					p.type = CS_MOVE;
-					p.direction = direction;
-					send_packet(&p);
-				}
-				else if(attack)
-				{
-					CS_ATTACK_PACKET p;
-					p.size = sizeof(p);
-					p.type = CS_ATTACK;
-					for (auto& a : p.mess)
-						a = 'k';
-					send_packet(&p);
-				}
+			
+			if(!isEnter)
+			{
+				if (event.type == sf::Event::KeyPressed) {
+					int direction = -1;
+					bool attack = false;
+					switch (event.key.code) {
+					case sf::Keyboard::Left:
+						direction = 2;
+						break;
+					case sf::Keyboard::Right:
+						direction = 3;
+						break;
+					case sf::Keyboard::Up:
+						direction = 0;
+						break;
+					case sf::Keyboard::Down:
+						direction = 1;
+						break;
+					case  sf::Keyboard::Space:
+						attack = true;
+						break;
+					case sf::Keyboard::Escape:
+						window.close();
+						break;
+					case sf::Keyboard::Enter:
+						isEnter = true;
+						break;
+					}
+					if (-1 != direction) {
+						CS_MOVE_PACKET p;
+						p.size = sizeof(p);
+						p.type = CS_MOVE;
+						p.direction = direction;
+						send_packet(&p);
+					}
+					else if (attack)
+					{
+						CS_ATTACK_PACKET p;
+						p.size = sizeof(p);
+						p.type = CS_ATTACK;
+						for (auto& a : p.mess)
+							a = 'k';
+						send_packet(&p);
+					}
 
+				}
 			}
+			else
+			{
+				KeySize++;
+				if (event.type == sf::Event::TextEntered && KeySize > 1)
+				{
+					if (event.text.unicode == '\r')
+					{
+						if(msg.size() != 0)
+						{
+							msg += '\0';
+							CS_CHAT_PACKET packet;
+							strcpy_s(packet.mess, msg.c_str());
+							packet.size = sizeof(CS_CHAT_PACKET) - (CHAT_SIZE - msg.size());
+							packet.type = CS_CHAT;
+							send_packet(&packet);
+						}
+						msg.clear();
+						KeySize = 0;
+						isEnter = false;
+					}
+					else if (event.text.unicode == '\b')
+					{
+						if (!msg.empty())
+						{
+							msg.pop_back();
+						}
+					}
+					else if (event.text.unicode < 128)
+					{
+						msg += static_cast<char>(event.text.unicode);
+					}
+					avatar.set_chat2(msg);
+				}
+				avatar.set_chat2(msg);
+				
+			}
+
 		}
 
 		window.clear();

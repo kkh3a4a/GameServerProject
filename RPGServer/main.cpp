@@ -43,10 +43,12 @@ void initialize_npc()
 	{
 		int npc_id = i + MAX_USER;
 		NPC* npc = reinterpret_cast<NPC*>(objects[npc_id]);
-
+		
+		relocation:
 		npc->_spawn_x = npc->_x = rand() % W_WIDTH;
 		npc->_spawn_y = npc->_y = rand() % W_HEIGHT;
-		
+		if (World_Map.find(std::make_pair(npc->_x, npc->_y)) != World_Map.end())
+			goto relocation;
 		/*npc->_x = 49 + i;
 		npc->_y = 49 + i;*/
 		npc->_state = ST_INGAME;
@@ -109,7 +111,7 @@ void createMap() {
 
 		std::map<std::pair<int, int>,int> uniquePairs;
 
-		while (uniquePairs.size() < 20000) {
+		while (uniquePairs.size() < 60000) {
 			if(rand() % 8 < 4)
 			{
 				int num1 = dist(rng);
@@ -198,6 +200,7 @@ int main() {
 	g_a_over._iocpop = OP_ACCEPT;
 	AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
 	connect_DB();
+	//createMap();
 	ReadMap();
 	initialize_npc();
 	thread timer_thread{ TimerThread };

@@ -64,6 +64,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk, int w_id)
 
 		break;
 	}
+	case SD_CHAT:
+	{
+		SD_CHAT_PACKET* packet = reinterpret_cast<SD_CHAT_PACKET*>(pk);
+		player_chat_log(w_id, packet->id, packet->time, packet->mess);
+		break;
+	}
 	default:
 	{
 		cout << "Àß¸øµÈ packet" << endl;
@@ -255,6 +261,25 @@ void player_change_location(int w_id, int id, int x, int y)
 		SQLWCHAR query[100];
 		swprintf(query, 100, L"EXEC Location_User %d, %d, %d", id, x, y);
 		retcode = SQLExecDirect(hstmt[w_id], query, SQL_NTS);
+		if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO)
+		{
+			show_DB_error(hstmt[w_id]);
+		}
+		SQLFreeHandle(SQL_HANDLE_STMT, hstmt[w_id]);
+	}
+}
+
+void player_chat_log(int w_id, int id, char* time, char* mess)
+{
+	int length = std::strlen(mess);
+	string msg(mess, length);
+	msg += '\0';
+	auto retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc[w_id], &hstmt[w_id]);
+
+	{
+		SQLWCHAR query[100];
+		swprintf(query, 100, L"EXEC Chating_Logs %d, '%hs', '%hs'", id, time, msg.c_str());
+		int retcode = SQLExecDirect(hstmt[w_id], query, SQL_NTS);
 		if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO)
 		{
 			show_DB_error(hstmt[w_id]);

@@ -203,6 +203,40 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		}
 		break;
 	}
+	case CS_CHAT:
+	{
+		CS_CHAT_PACKET* packet = reinterpret_cast<CS_CHAT_PACKET*>(pk);
+		set<int> z_list;
+		zone_check(objects[o_id]->_x, objects[o_id]->_y, z_list);
+
+		for (auto& p_id : z_list) {
+			if (p_id >= MAX_USER)
+				break;
+			if (can_see(objects[p_id]->_id, o_id))
+			{
+				Player* player = reinterpret_cast<Player*>(objects[p_id]);
+				player->send_chat_packet(o_id, packet->mess);
+			}
+		}
+		int length = std::strlen(packet->mess);
+		string msg(packet->mess, length);
+		msg += '\0';
+		SD_CHAT_PACKET d_packet;
+		std::time_t currentTime = std::time(nullptr);
+		std::tm localTime;
+		localtime_s(&localTime, &currentTime);
+		Player* player = reinterpret_cast<Player*>(objects[o_id]);
+
+		strcpy_s(d_packet.mess, msg.c_str());
+		d_packet.type = SD_CHAT;
+		d_packet.size = sizeof(SD_CHAT_PACKET) - (CHAT_SIZE - msg.size());
+		d_packet.id = player->_db_id;
+
+		std::strftime(d_packet.time, sizeof(d_packet.time), "%Y-%m-%d %H:%M:%S", &localTime);
+		DB_send_packet(&d_packet);
+		break;
+
+	}
 	case DS_PLAYER_LOGIN:
 	{
 		DS_PLAYER_LOGIN_PACKET* packet = reinterpret_cast<DS_PLAYER_LOGIN_PACKET*>(pk);

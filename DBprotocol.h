@@ -7,7 +7,7 @@ constexpr int DB_NAME_SIZE = 20;
 constexpr char DS_PLAYER_LOGIN = 50;
 constexpr char DS_PLAYER_LOCATION = 51;
 constexpr char DS_PLAYER_CHANGE_STAT = 60;
-
+constexpr char DS_CHAT = 52;
 constexpr int DB_THREAD_NUM = 8;
 
 
@@ -16,7 +16,9 @@ constexpr int DB_THREAD_NUM = 8;
 
 constexpr char SD_PLAYER_LOGIN = 50;
 constexpr char SD_PLAYER_LOCATION = 51;
+constexpr char SD_CHAT = 52;
 constexpr char SD_PLAYER_CHANGE_STAT = 60;
+
 //////////////////////////
 
 struct  DS_PLAYER_LOGIN_PACKET {
@@ -69,7 +71,13 @@ struct	SD_PLAYER_LOCATION_PACKET{
 	int		x;
 	int		y;
 };
-
+struct SD_CHAT_PACKET {
+	unsigned short size;
+	char	type;
+	int		id;
+	char	time[20];
+	char	mess[200];
+};
 
 
 #define DB_SERVER_ADDR "127.0.0.1"

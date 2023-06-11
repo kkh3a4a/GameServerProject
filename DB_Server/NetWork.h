@@ -55,3 +55,4 @@ void player_login(int s_id, int id, char name[20], int key, int w_id);
 void show_DB_error(SQLHSTMT hstmt);
 void player_change_state(int w_id, int id, int exp, int level, int hp, int max_hp);
 void player_change_location(int w_id, int id, int x, int y);
+void player_chat_log(int w_id, int id, char* time, char* mess);
