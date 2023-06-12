@@ -13,6 +13,7 @@ public:
 	int		_exp;
 	int		_movecount = 0;
 	chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();
+	chrono::system_clock::time_point _p_last_move_time = chrono::system_clock::now();
 	chrono::system_clock::time_point _last_dead_time = chrono::system_clock::now();
 	Player(int id, S_STATE _state);
 	~Player();

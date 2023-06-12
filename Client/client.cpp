@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include<set>
 using namespace std;
 
 #pragma comment (lib, "opengl32.lib")
@@ -36,6 +37,7 @@ sf::Texture* clearTexture;
 sf::Texture* fire;
 sf::Texture* stone;
 sf::Texture* wood;
+
 float borderWidth = 2.0f;
 sf::Color borderColor = sf::Color::Black;
 sf::RectangleShape borderShape;
@@ -45,7 +47,7 @@ sf::Sprite m_fire;
 sf::Sprite m_Stone;
 sf::Sprite m_Wood;
 sf::Sprite chat;
-
+sf::Sprite m_attack_range;
 int stamina = 100;
 int max_stamina = 100;
 std::map<std::pair<short, short>, short> World_Map;
@@ -60,7 +62,9 @@ private:
 	
 public:
 	chrono::system_clock::time_point m_mess_end_time;
+	chrono::system_clock::time_point m_attack_range_end_time;
 	sf::Sprite m_HP;
+	set<pair<short, short>> attack_range;
 	int id;
 	int m_x, m_y;
 	int hp;
@@ -77,6 +81,7 @@ public:
 		m_HP.setTexture(*hpTexture);
 		m_HP.setColor(sf::Color::Green);
 		m_mess_end_time = chrono::system_clock::now();
+		m_attack_range_end_time= chrono::system_clock::now();
 		hp = 0;
 	}
 	OBJECT() {
@@ -140,7 +145,6 @@ public:
 			}
 			else
 			{
-				
 				sf::Vector2f size((int)(120 * ((float)TILE_WIDTH / 24)), int((float)10 * ((float)TILE_WIDTH / 30)));
 				borderShape.setSize(size + sf::Vector2f(2 * borderWidth, 2 * borderWidth));
 				borderShape.setPosition(m_HP.getPosition() - sf::Vector2f(borderWidth, borderWidth));
@@ -169,6 +173,17 @@ public:
 			
 		}
 		//
+	}
+	void attackrangedraw() {
+		if (m_attack_range_end_time > chrono::system_clock::now()) {
+			for (auto& p : attack_range)
+			{
+				float rx = (p.first - g_left_x) * TILE_WIDTH + 1;
+				float ry = (p.second - g_top_y) * TILE_WIDTH + 1;
+				m_attack_range.setPosition(rx, ry);
+				g_window->draw(m_attack_range);
+			}
+		}
 	}
 	void set_name(const char str[]) {
 		m_name.setFont(g_font);
@@ -216,6 +231,12 @@ public:
 	void set_Sprite_scale(float x, float y)
 	{
 		m_sprite.setScale(x, y);
+	}
+	void set_attack_range()
+	{
+		
+
+		m_attack_range_end_time = chrono::system_clock::now() + chrono::milliseconds(1000);
 	}
 };
 
@@ -279,7 +300,11 @@ void client_initialize()
 		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
 		m_Wood.setScale(scale);
 	}
-
+	{
+		m_attack_range.setTexture(*clearTexture);
+		m_attack_range.setColor(sf::Color(255, 0, 0, 100));
+		m_attack_range.setTextureRect(sf::IntRect(1, 1, TILE_WIDTH, TILE_WIDTH));
+	}
 
 	//m_Stone.setTextureRect(sf::IntRect(0,0, TILE_WIDTH, TILE_WIDTH));
 }
@@ -382,8 +407,6 @@ void ProcessPacket(char* ptr)
 	}
 	case SC_HP_CHANGE:
 	{
-		
-
 		SC_HP_CHANGE_PACKET* packet = reinterpret_cast<SC_HP_CHANGE_PACKET*>(ptr);
 		
 		int other_id = packet->id;
@@ -396,6 +419,22 @@ void ProcessPacket(char* ptr)
 			players[other_id].hp = packet->hp;
 			players[other_id]._max_hp = packet->max_hp;
 		}
+		break;
+	}
+	case SC_ATTACK_RANGE:
+	{
+		SC_ATTACK_RANGE_PACKET* packet = reinterpret_cast<SC_ATTACK_RANGE_PACKET*>(ptr);
+		players[packet->id].attack_range.clear();
+		std::string range_string(packet->range);
+		std::istringstream iss(range_string);
+		std::string line;
+		while (std::getline(iss, line)) {
+			std::istringstream line_stream(line);
+			int first, second;
+			line_stream >> first >> second;
+			players[packet->id].attack_range.insert(std::make_pair(first, second));
+		}
+		players[packet->id].set_attack_range();
 		break;
 	}
 	default:
@@ -490,7 +529,7 @@ void client_main()
 				}
 			}
 		}
-	
+	for (auto& pl : players) pl.second.attackrangedraw();
 	for (auto& pl : players) pl.second.draw();
 	sf::Text text;
 	text.setFont(g_font);
@@ -605,8 +644,6 @@ int main()
 						CS_ATTACK_PACKET p;
 						p.size = sizeof(p);
 						p.type = CS_ATTACK;
-						for (auto& a : p.mess)
-							a = 'k';
 						send_packet(&p);
 					}
 

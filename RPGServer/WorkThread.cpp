@@ -177,7 +177,9 @@ void worker_thread(WSA_OVER_EX g_a_over)
 				}
 				npc->_lua_lock.unlock();
 			}
-			npc->move_NPC();
+			EVENT ev{ objects[key]->_id, EV_MOVE, chrono::system_clock::now() + 1s };
+			//l_q.lock();
+			timer_queue.push(ev);
 			delete ex_over;
 			break;
 		}

@@ -30,6 +30,7 @@ constexpr char SC_LOGIN_OK = 7;
 constexpr char SC_LOGIN_FAIL = 8;
 constexpr char SC_STAT_CHANGE = 9;
 constexpr char SC_HP_CHANGE = 10;
+constexpr char SC_ATTACK_RANGE = 11;
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
@@ -54,7 +55,6 @@ struct CS_CHAT_PACKET {
 struct CS_ATTACK_PACKET {
 	unsigned short size;			
 	char	type;
-	char	mess[CHAT_SIZE];
 };
 struct CS_TELEPORT_PACKET {
 	unsigned short size;
@@ -131,5 +131,12 @@ struct SC_HP_CHANGE_PACKET {
 	int		id;
 	int		max_hp;
 	int		hp;
+};
+struct SC_ATTACK_RANGE_PACKET {
+	unsigned short size;
+	char	type;
+
+	int		id;
+	char	range[200];
 };
 #pragma pack (pop)

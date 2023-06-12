@@ -62,119 +62,121 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(pk);
-		player->_last_move_time = packet->move_time;
-		short x = player->_x;
-		short y = player->_y;
-		int b_my_zoneY, b_my_zoneX;
-		b_my_zoneY = player->_y / ZONE_SEC;
-		b_my_zoneX = player->_x / ZONE_SEC;
-		switch (packet->direction) {
-		case 0: if (y > 0) y--; break;
-		case 1: if (y < W_HEIGHT - 1) y++; break;
-		case 2: if (x > 0) x--; break;
-		case 3: if (x < W_WIDTH - 1) x++; break;
-		}
-		if (World_Map.find(make_pair(x, y)) == World_Map.end())
+		if (player->_p_last_move_time < (chrono::system_clock::now() - chrono::milliseconds(100)))
 		{
-
-			player->_x = x;
-			player->_y = y;
-			int my_zoneY, my_zoneX;
-			my_zoneY = player->_y / ZONE_SEC;
-			my_zoneX = player->_x / ZONE_SEC;
-
-			if (my_zoneX != b_my_zoneX || my_zoneY != b_my_zoneY)
+			player->_p_last_move_time = chrono::system_clock::now();
+			short x = player->_x;
+			short y = player->_y;
+			int b_my_zoneY, b_my_zoneX;
+			b_my_zoneY = player->_y / ZONE_SEC;
+			b_my_zoneX = player->_x / ZONE_SEC;
+			switch (packet->direction) {
+			case 0: if (y > 0) y--; break;
+			case 1: if (y < W_HEIGHT - 1) y++; break;
+			case 2: if (x > 0) x--; break;
+			case 3: if (x < W_WIDTH - 1) x++; break;
+			}
+			if (World_Map.find(make_pair(x, y)) == World_Map.end())
 			{
-				zone[b_my_zoneY][b_my_zoneX]->REMOVE(player->_id);
-				zone[my_zoneY][my_zoneX]->ADD(player->_id);
-			}
 
-			unordered_set <int> old_vl;
-			{
-				std::shared_lock<std::shared_mutex> lock(player->_vl);
-				old_vl = player->_view_list;
-			}
+				player->_x = x;
+				player->_y = y;
+				int my_zoneY, my_zoneX;
+				my_zoneY = player->_y / ZONE_SEC;
+				my_zoneX = player->_x / ZONE_SEC;
 
-			unordered_set <int> new_vl;
-
-			set<int> z_list;
-			zone_check(player->_x, player->_y, z_list);
-			for (auto& p_id : z_list) {
+				if (my_zoneX != b_my_zoneX || my_zoneY != b_my_zoneY)
 				{
-					std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
-					if (objects[p_id]->_state != ST_INGAME)
+					zone[b_my_zoneY][b_my_zoneX]->REMOVE(player->_id);
+					zone[my_zoneY][my_zoneX]->ADD(player->_id);
+				}
+
+				unordered_set <int> old_vl;
+				{
+					std::shared_lock<std::shared_mutex> lock(player->_vl);
+					old_vl = player->_view_list;
+				}
+
+				unordered_set <int> new_vl;
+
+				set<int> z_list;
+				zone_check(player->_x, player->_y, z_list);
+				for (auto& p_id : z_list) {
 					{
-						lock.unlock();
-						continue;
+						std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
+						if (objects[p_id]->_state != ST_INGAME)
+						{
+							lock.unlock();
+							continue;
+						}
+					}
+					if (objects[p_id]->_id == o_id) continue;
+					if (can_see(objects[p_id]->_id, o_id)) {
+						new_vl.insert(objects[p_id]->_id);
 					}
 				}
-				if (objects[p_id]->_id == o_id) continue;
-				if (can_see(objects[p_id]->_id, o_id)) {
-					new_vl.insert(objects[p_id]->_id);
-				}
-			}
 
 
-			for (auto& o : new_vl) {
-				if (!is_NPC(o))
-				{
-					Player* pl = reinterpret_cast<Player*>(objects[o]);
-
-					if (old_vl.count(o) == 0) {
-						pl->send_add_object_packet(o_id);
-						player->send_add_object_packet(o);
-					}
-					else {
-						pl->send_move_packet(o_id);
-						player->send_move_packet(o);
-					}
-				}
-				else
-				{
-					NPC* nl = reinterpret_cast<NPC*>(objects[o]);
-
-					bool before_wake = nl->_n_wake;
-					if (old_vl.count(o) == 0) {
-						nl->add_objects(o_id);
-						player->send_add_object_packet(o);
-					}
-					else {
-						player->send_move_packet(o);
-
-					}
-					if (before_wake == 0)
+				for (auto& o : new_vl) {
+					if (!is_NPC(o))
 					{
-						if (CAS(reinterpret_cast<volatile int*>(&nl->_n_wake), before_wake, 1))
-							wake_up_npc(o);
-					}
-				}
-			}
-			player->send_move_packet(o_id);
+						Player* pl = reinterpret_cast<Player*>(objects[o]);
 
-			for (auto& p_id : old_vl) {
-				if (objects[p_id]->_state != ST_INGAME) continue;
-				if (objects[p_id]->_id == o_id) continue;
-				if (new_vl.count(p_id) == 0)
-				{
-					player->send_remove_object_packet(p_id);
-					if (!is_NPC(p_id))
-					{
-						Player* pl = reinterpret_cast<Player*>(objects[p_id]);
-						pl->send_remove_object_packet(o_id);
+						if (old_vl.count(o) == 0) {
+							pl->send_add_object_packet(o_id);
+							player->send_add_object_packet(o);
+						}
+						else {
+							pl->send_move_packet(o_id);
+							player->send_move_packet(o);
+						}
 					}
-					else {
-						NPC* npc = reinterpret_cast<NPC*>(objects[p_id]);
+					else
+					{
+						NPC* nl = reinterpret_cast<NPC*>(objects[o]);
+
+						bool before_wake = nl->_n_wake;
+						if (old_vl.count(o) == 0) {
+							nl->add_objects(o_id);
+							player->send_add_object_packet(o);
+						}
+						else {
+							player->send_move_packet(o);
+
+						}
+						if (before_wake == 0)
+						{
+							if (CAS(reinterpret_cast<volatile int*>(&nl->_n_wake), before_wake, 1))
+								wake_up_npc(o);
+						}
 					}
 				}
-			}
-			player->_movecount++;
-			if (player->_movecount > 5)
-			{
-				player->_movecount = 0;
-				player->send_location_DB();
+				player->send_move_packet(o_id);
+
+				for (auto& p_id : old_vl) {
+					if (objects[p_id]->_state != ST_INGAME) continue;
+					if (objects[p_id]->_id == o_id) continue;
+					if (new_vl.count(p_id) == 0)
+					{
+						player->send_remove_object_packet(p_id);
+						if (!is_NPC(p_id))
+						{
+							Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+							pl->send_remove_object_packet(o_id);
+						}
+						else {
+							NPC* npc = reinterpret_cast<NPC*>(objects[p_id]);
+						}
+					}
+				}
+				player->_movecount++;
+				if (player->_movecount > 5)
+				{
+					player->_movecount = 0;
+					player->send_location_DB();
+				}
 			}
 		}
-
 
 		break;
 	}
@@ -183,21 +185,25 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		CS_ATTACK_PACKET* packet = reinterpret_cast<CS_ATTACK_PACKET*>(pk);
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		{
-			shared_lock<shared_mutex> lock(player->_vl);
-			for (auto& v_id : player->_view_list)
+			if(player->_last_attack_time < chrono::system_clock::now() - 1s)
 			{
-				if (v_id < MAX_USER)
-					continue;
+				player->_last_attack_time = chrono::system_clock::now();
+				shared_lock<shared_mutex> lock(player->_vl);
+				for (auto& v_id : player->_view_list)
 				{
-					shared_lock<shared_mutex> slock(objects[v_id]->_s_lock);
-					if (objects[v_id]->_state != ST_INGAME)
+					if (v_id < MAX_USER)
 						continue;
+					{
+						shared_lock<shared_mutex> slock(objects[v_id]->_s_lock);
+						if (objects[v_id]->_state != ST_INGAME)
+							continue;
+					}
+
+					WSA_OVER_EX* w_ex = new WSA_OVER_EX;
+					w_ex->_causeId = o_id;
+					w_ex->_iocpop = OP_NPC_DEFENCE;
+					PostQueuedCompletionStatus(h_iocp, 1, v_id, &w_ex->_wsaover);
 				}
-				
-				WSA_OVER_EX* w_ex = new WSA_OVER_EX;
-				w_ex->_causeId = o_id;
-				w_ex->_iocpop = OP_NPC_DEFENCE;
-				PostQueuedCompletionStatus(h_iocp, 1, v_id, &w_ex->_wsaover);
 			}
 			
 		}
@@ -599,17 +605,16 @@ int API_Defence(lua_State* L)
 {
 	int atk_id = (int)lua_tointeger(L, -2);
 	int def_id = (int)lua_tointeger(L, -1);
+	NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
+
 	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
 	{
-		if (def_id >= MAX_USER)
-		{
-			NPC* npc = reinterpret_cast<NPC*>(objects[def_id]);
-			{
-				npc->_last_attacker = atk_id;
-				npc->_is_batte = true;
-			}
-			npc->heal_NPC();
-		}
+		npc->heal_NPC();
+	}
+	if (def_id >= MAX_USER)
+	{
+		npc->_is_batte = true;
+		npc->_last_attacker = atk_id;
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;

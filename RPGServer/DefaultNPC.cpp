@@ -142,7 +142,7 @@ void NPC::move_NPC()
 	{
 		EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
 		timer_queue.push(ev);
-		
+		send_attack_range();
 
 		return;
 	}
@@ -232,7 +232,13 @@ void NPC::move_NPC()
 				else
 					return;
 			}
-
+			if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
+			{
+				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
+				timer_queue.push(ev);
+				send_attack_range();
+				return;
+			}
 		}
 		else
 		{
@@ -346,6 +352,7 @@ void NPC::move_NPC()
 						move_queue.push(make_pair(_x, y));
 				}
 			}
+
 			EVENT ev{ _id, EV_MOVE,chrono::system_clock::now()};
 			//l_q.lock();
 			timer_queue.push(ev);
@@ -417,6 +424,14 @@ void NPC::move_NPC()
 				else
 					return;
 			}
+			if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
+			{
+				move_queue.clear();
+				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
+				timer_queue.push(ev);
+				send_attack_range();
+				return;
+			}
 		}
 	}
 	
@@ -424,6 +439,35 @@ void NPC::move_NPC()
 	EVENT ev{ _id, EV_MOVE,chrono::system_clock::now() + 1s };
 	//l_q.lock();
 	timer_queue.push(ev);
+}
+
+void NPC::send_attack_range()
+{
+	SC_ATTACK_RANGE_PACKET packet;
+	packet.id = _id;
+	packet.type = SC_ATTACK_RANGE;
+	string s;
+	for(int i = -1; i <=1; ++i)
+	{
+		for (int j = -1; j <= 1; ++j)
+		{
+			char buffer[100];
+
+			sprintf_s(buffer, "%d %d\n", _x + j, _y + i);
+			s += buffer;
+		}
+	}
+	strcpy_s(packet.range, sizeof(char) * (s.size() + 1), s.c_str());
+	packet.size = sizeof(SC_ATTACK_RANGE_PACKET) - (200 - s.size() - 1);
+	for (auto p_id : _view_list)
+	{
+		if (p_id >= MAX_USER)
+			break;
+		if (objects[p_id]->_state != ST_INGAME) continue;
+		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+		pl->send_packet(&packet);
+	}
+	
 }
 
 

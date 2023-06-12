@@ -20,4 +20,5 @@ public:
 	void respawn_NPC();
 	void heal_NPC();
 	void move_NPC();
+	void send_attack_range();
 };
