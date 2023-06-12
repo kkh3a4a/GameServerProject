@@ -123,15 +123,28 @@ public:
 			g_window->draw(m_name);
 		}
 		else {
-			chat.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry - TILE_WIDTH);
-			int text = (int)((m_chat.getString().getSize() - m_name.getString().getSize() - 1));
-			if (text < 6)
-				text = 6;
-			chat.setTextureRect(sf::IntRect(0, 0, (float)text * (TILE_WIDTH / 3), int((float)50 * ((float)TILE_WIDTH / 40))));
-			g_window->draw(chat);
+			if(id<MAX_USER)
+			{
+				chat.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry - TILE_WIDTH);
+				int text = (int)((m_chat.getString().getSize() - m_name.getString().getSize() - 1));
+				if (text < 7)
+					text = 7;
+				chat.setTextureRect(sf::IntRect(0, 0, (float)text * (TILE_WIDTH / 3), int((float)50 * ((float)TILE_WIDTH / 40))));
+				g_window->draw(chat);
 
-			m_chat.setPosition(rx + TILE_WIDTH/2 - size.width / 2, ry - TILE_WIDTH);
-			g_window->draw(m_chat);
+				m_chat.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry - TILE_WIDTH);
+				g_window->draw(m_chat);
+			}
+			else
+			{
+				chat.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry - 10);
+				int text = (int)((m_chat.getString().getSize()));
+				chat.setTextureRect(sf::IntRect(0, 0, (float)text * (TILE_WIDTH / 3), int((float)30 * ((float)TILE_WIDTH / 40))));
+				g_window->draw(chat);
+
+				m_chat.setPosition(rx + TILE_WIDTH / 2 - size.width / 2, ry - 10);
+				g_window->draw(m_chat);
+			}
 			
 			
 		}
@@ -205,12 +218,15 @@ public:
 	void set_chat(const char str[]) {
 		int length = std::strlen(str);
 		string msg(str, length);
-		string temp_name = m_name.getString();
-		/*temp_name.resize(temp_name.size() + 1);
-		temp_name[temp_name.size()] = '\n';*/
-		temp_name += ":";
-		temp_name += "\n";
-		msg.insert(0, temp_name);
+		if(id < MAX_USER)
+		{
+			string temp_name = m_name.getString();
+			/*temp_name.resize(temp_name.size() + 1);
+			temp_name[temp_name.size()] = '\n';*/
+			temp_name += ":";
+			temp_name += "\n";
+			msg.insert(0, temp_name);
+		}
 
 		m_chat.setFont(g_font);
 		m_chat.setString(msg);

@@ -451,6 +451,7 @@ void NPC::send_attack_range(int attack_time)
 	packet.type = SC_ATTACK_RANGE;
 	packet.attack_time = attack_time;
 	string s;
+	string s_msg;
 	if(_type == 1)
 	{
 		for (int i = -1; i <= 1; ++i)
@@ -463,6 +464,7 @@ void NPC::send_attack_range(int attack_time)
 				s += buffer;
 			}
 		}
+		s_msg = "krrrr";
 	}
 	else if (_type == 2)
 	{
@@ -477,6 +479,7 @@ void NPC::send_attack_range(int attack_time)
 		if (objects[p_id]->_state != ST_INGAME) continue;
 		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 		pl->send_packet(&packet);
+		pl->send_chat_packet(_id, s_msg.c_str());
 	}
 	
 }

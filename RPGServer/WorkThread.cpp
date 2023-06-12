@@ -175,6 +175,8 @@ void worker_thread(WSA_OVER_EX g_a_over)
 						int status = lua_pcall(L, 1, 0, 0);
 					}
 				}
+
+
 				npc->_lua_lock.unlock();
 			}
 			EVENT ev{ objects[key]->_id, EV_MOVE, chrono::system_clock::now() + 1s };
