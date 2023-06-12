@@ -12,6 +12,7 @@ public:
 	int _spawn_x = 0, _spawn_y = 0;
 	int _last_attacker = 0;
 	bool _is_batte = false;
+	short _type = 1;
 	concurrency::concurrent_queue<pair<int, int>> move_queue;
 	lua_State* _L;
 	std::mutex _lua_lock;
@@ -20,5 +21,5 @@ public:
 	void respawn_NPC();
 	void heal_NPC();
 	void move_NPC();
-	void send_attack_range();
+	void send_attack_range(int attack_time);
 };

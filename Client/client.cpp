@@ -30,6 +30,7 @@ int g_left_x;
 int g_top_y;
 int g_myid;
 volatile bool login_success = false;
+chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();
 sf::RenderWindow* g_window;
 sf::Font g_font;
 sf::Texture* hpTexture;
@@ -48,6 +49,8 @@ sf::Sprite m_Stone;
 sf::Sprite m_Wood;
 sf::Sprite chat;
 sf::Sprite m_attack_range;
+sf::Sprite p_attack_range;
+
 int stamina = 100;
 int max_stamina = 100;
 std::map<std::pair<short, short>, short> World_Map;
@@ -62,9 +65,8 @@ private:
 	
 public:
 	chrono::system_clock::time_point m_mess_end_time;
-	chrono::system_clock::time_point m_attack_range_end_time;
 	sf::Sprite m_HP;
-	set<pair<short, short>> attack_range;
+	map<pair<short, short>, chrono::system_clock::time_point> attack_range;
 	int id;
 	int m_x, m_y;
 	int hp;
@@ -81,7 +83,6 @@ public:
 		m_HP.setTexture(*hpTexture);
 		m_HP.setColor(sf::Color::Green);
 		m_mess_end_time = chrono::system_clock::now();
-		m_attack_range_end_time= chrono::system_clock::now();
 		hp = 0;
 	}
 	OBJECT() {
@@ -175,15 +176,22 @@ public:
 		//
 	}
 	void attackrangedraw() {
-		if (m_attack_range_end_time > chrono::system_clock::now()) {
+		
+		
 			for (auto& p : attack_range)
 			{
-				float rx = (p.first - g_left_x) * TILE_WIDTH + 1;
-				float ry = (p.second - g_top_y) * TILE_WIDTH + 1;
-				m_attack_range.setPosition(rx, ry);
-				g_window->draw(m_attack_range);
+				if (p.second > chrono::system_clock::now()) {
+					float rx = (p.first.first - g_left_x) * TILE_WIDTH + 1;
+					float ry = (p.first.second - g_top_y) * TILE_WIDTH + 1;
+					m_attack_range.setPosition(rx, ry);
+					g_window->draw(m_attack_range);
+				}
+				else
+				{
+					attack_range.erase(make_pair(p.first.first, p.first.second));
+				}
 			}
-		}
+		
 	}
 	void set_name(const char str[]) {
 		m_name.setFont(g_font);
@@ -231,12 +239,6 @@ public:
 	void set_Sprite_scale(float x, float y)
 	{
 		m_sprite.setScale(x, y);
-	}
-	void set_attack_range()
-	{
-		
-
-		m_attack_range_end_time = chrono::system_clock::now() + chrono::milliseconds(1000);
 	}
 };
 
@@ -304,6 +306,11 @@ void client_initialize()
 		m_attack_range.setTexture(*clearTexture);
 		m_attack_range.setColor(sf::Color(255, 0, 0, 100));
 		m_attack_range.setTextureRect(sf::IntRect(1, 1, TILE_WIDTH, TILE_WIDTH));
+	}
+	{
+		p_attack_range.setTexture(*clearTexture);
+		p_attack_range.setColor(sf::Color(0, 255, 0, 100));
+		p_attack_range.setTextureRect(sf::IntRect(1, 1, TILE_WIDTH, TILE_WIDTH));
 	}
 
 	//m_Stone.setTextureRect(sf::IntRect(0,0, TILE_WIDTH, TILE_WIDTH));
@@ -432,9 +439,13 @@ void ProcessPacket(char* ptr)
 			std::istringstream line_stream(line);
 			int first, second;
 			line_stream >> first >> second;
-			players[packet->id].attack_range.insert(std::make_pair(first, second));
+			players[packet->id].attack_range[make_pair(first, second)] = (chrono::system_clock::now() + chrono::milliseconds(packet->attack_time));
 		}
-		players[packet->id].set_attack_range();
+		break;
+	}
+	case SC_ATTACK:
+	{
+		_last_attack_time = chrono::system_clock::now();
 		break;
 	}
 	default:
@@ -530,6 +541,20 @@ void client_main()
 			}
 		}
 	for (auto& pl : players) pl.second.attackrangedraw();
+	if (_last_attack_time > chrono::system_clock::now() - chrono::milliseconds(200))
+	{
+		for (int i = -1; i <= 1; ++i)
+		{
+			for (int j = -1; j <= 1; ++j)
+			{
+				float rx = ((avatar.m_x - i) - g_left_x) * TILE_WIDTH + 1;
+				float ry = ((avatar.m_y - j) - g_top_y) * TILE_WIDTH + 1;
+				p_attack_range.setPosition(rx, ry);
+
+				g_window->draw(p_attack_range);
+			}
+		}
+	}
 	for (auto& pl : players) pl.second.draw();
 	sf::Text text;
 	text.setFont(g_font);
@@ -641,10 +666,13 @@ int main()
 					}
 					else if (attack)
 					{
-						CS_ATTACK_PACKET p;
-						p.size = sizeof(p);
-						p.type = CS_ATTACK;
-						send_packet(&p);
+						if (_last_attack_time < chrono::system_clock::now() - chrono::milliseconds(800))//무한 send 방지
+						{
+							CS_ATTACK_PACKET p;
+							p.size = sizeof(p);
+							p.type = CS_ATTACK;
+							send_packet(&p);
+						}
 					}
 
 				}

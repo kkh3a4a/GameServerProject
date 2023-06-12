@@ -31,6 +31,7 @@ constexpr char SC_LOGIN_FAIL = 8;
 constexpr char SC_STAT_CHANGE = 9;
 constexpr char SC_HP_CHANGE = 10;
 constexpr char SC_ATTACK_RANGE = 11;
+constexpr char SC_ATTACK = 12;
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
@@ -125,6 +126,11 @@ struct SC_STAT_CHANGE_PACKET {
 	int		level;
 };
 
+struct SC_ATTACK_PACKET {
+	unsigned short size;
+	char	type;
+};
+
 struct SC_HP_CHANGE_PACKET {
 	unsigned short size;
 	char	type;
@@ -137,6 +143,7 @@ struct SC_ATTACK_RANGE_PACKET {
 	char	type;
 
 	int		id;
+	int		attack_time;
 	char	range[200];
 };
 #pragma pack (pop)

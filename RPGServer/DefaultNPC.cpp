@@ -140,9 +140,10 @@ void NPC::move_NPC()
 	b_my_zoneX = _x / ZONE_SEC;
 	if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
 	{
-		EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
+		int attack_time = 1000;
+		EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
 		timer_queue.push(ev);
-		send_attack_range();
+		send_attack_range(attack_time);
 
 		return;
 	}
@@ -234,9 +235,10 @@ void NPC::move_NPC()
 			}
 			if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
 			{
-				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
+				int attack_time = 1000;
+				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
 				timer_queue.push(ev);
-				send_attack_range();
+				send_attack_range(attack_time);
 				return;
 			}
 		}
@@ -426,10 +428,11 @@ void NPC::move_NPC()
 			}
 			if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
 			{
+				int attack_time = 1000;
 				move_queue.clear();
-				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + 1s };
+				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time)};
 				timer_queue.push(ev);
-				send_attack_range();
+				send_attack_range(attack_time);
 				return;
 			}
 		}
@@ -441,21 +444,29 @@ void NPC::move_NPC()
 	timer_queue.push(ev);
 }
 
-void NPC::send_attack_range()
+void NPC::send_attack_range(int attack_time)
 {
 	SC_ATTACK_RANGE_PACKET packet;
 	packet.id = _id;
 	packet.type = SC_ATTACK_RANGE;
+	packet.attack_time = attack_time;
 	string s;
-	for(int i = -1; i <=1; ++i)
+	if(_type == 1)
 	{
-		for (int j = -1; j <= 1; ++j)
+		for (int i = -1; i <= 1; ++i)
 		{
-			char buffer[100];
+			for (int j = -1; j <= 1; ++j)
+			{
+				char buffer[100];
 
-			sprintf_s(buffer, "%d %d\n", _x + j, _y + i);
-			s += buffer;
+				sprintf_s(buffer, "%d %d\n", _x + j, _y + i);
+				s += buffer;
+			}
 		}
+	}
+	else if (_type == 2)
+	{
+
 	}
 	strcpy_s(packet.range, sizeof(char) * (s.size() + 1), s.c_str());
 	packet.size = sizeof(SC_ATTACK_RANGE_PACKET) - (200 - s.size() - 1);

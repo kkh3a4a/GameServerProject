@@ -187,6 +187,11 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		{
 			if(player->_last_attack_time < chrono::system_clock::now() - 1s)
 			{
+				SC_ATTACK_PACKET packet;
+				packet.size = sizeof(SC_ATTACK_PACKET);
+				packet.type = SC_ATTACK;
+				player->send_packet(&packet);
+
 				player->_last_attack_time = chrono::system_clock::now();
 				shared_lock<shared_mutex> lock(player->_vl);
 				for (auto& v_id : player->_view_list)
