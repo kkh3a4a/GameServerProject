@@ -195,7 +195,6 @@ public:
 			for (auto& p : attack_range)
 			{
 				int a = 150 - (p.second - time).count() / 100000;
-				cout << a << endl;
 				m_attack_range.setColor(sf::Color(255, 0, 0, a ));
 				if (p.second > time) {
 					float rx = (p.first.first - g_left_x) * TILE_WIDTH + 1;

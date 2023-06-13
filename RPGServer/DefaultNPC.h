@@ -12,7 +12,9 @@ public:
 	int _spawn_x = 0, _spawn_y = 0;
 	int _last_attacker = 0;
 	bool _is_batte = false;
-	short _type = 1;
+	short _n_type = 1;						// 1, 2 peace 3, 4 agro
+											// 1, 3 로밍 2, 4 고정
+	bool agro = 0;
 	concurrency::concurrent_queue<pair<int, int>> move_queue;
 	lua_State* _L;
 	std::mutex _lua_lock;

@@ -26,6 +26,7 @@ extern HANDLE h_iocp;
 bool CAS(volatile int* addr, int expected, int update);
 extern SOCKET g_s_socket, g_c_socket;
 extern concurrency::concurrent_priority_queue <class EVENT> timer_queue;
+extern std::set<int> login_player;
 extern int DB_prev_size;
 /////DB/////
 extern SOCKET DB_socket;
@@ -71,7 +72,7 @@ public:
 
 	void processpacket(int client_id, void* packet);
 	void disconnect(int o_id);
-
+	void login_fail_disconnect(int o_id);
 	void wake_up_npc(int n_id);
 	void do_npc_ramdom_move(int o_id);
 	void set_accept_over();

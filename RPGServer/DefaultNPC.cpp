@@ -141,6 +141,10 @@ void NPC::move_NPC()
 	if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
 	{
 		int attack_time = 1000;
+		_lua_lock.lock();
+		lua_getglobal(_L, "event_NPC_Attack_msg");
+		lua_pcall(_L, 0, 0, 0);
+		_lua_lock.unlock();
 		EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
 		timer_queue.push(ev);
 		send_attack_range(attack_time);
@@ -236,6 +240,10 @@ void NPC::move_NPC()
 			if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
 			{
 				int attack_time = 1000;
+				_lua_lock.lock();
+				lua_getglobal(_L, "event_NPC_Attack_msg");
+				lua_pcall(_L, 0, 0, 0);
+				_lua_lock.unlock();
 				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
 				timer_queue.push(ev);
 				send_attack_range(attack_time);
@@ -430,6 +438,12 @@ void NPC::move_NPC()
 			{
 				int attack_time = 1000;
 				move_queue.clear();
+
+				_lua_lock.lock();
+				lua_getglobal(_L, "event_NPC_Attack_msg");
+				lua_pcall(_L, 0, 0, 0);
+				_lua_lock.unlock();
+
 				EVENT ev{ _id, EV_ATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time)};
 				timer_queue.push(ev);
 				send_attack_range(attack_time);
@@ -451,8 +465,7 @@ void NPC::send_attack_range(int attack_time)
 	packet.type = SC_ATTACK_RANGE;
 	packet.attack_time = attack_time;
 	string s;
-	string s_msg;
-	if(_type == 1)
+	if(_n_type == 1)
 	{
 		for (int i = -1; i <= 1; ++i)
 		{
@@ -464,9 +477,8 @@ void NPC::send_attack_range(int attack_time)
 				s += buffer;
 			}
 		}
-		s_msg = "krrrr";
 	}
-	else if (_type == 2)
+	else if (_n_type == 2)
 	{
 
 	}
@@ -479,7 +491,6 @@ void NPC::send_attack_range(int attack_time)
 		if (objects[p_id]->_state != ST_INGAME) continue;
 		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 		pl->send_packet(&packet);
-		pl->send_chat_packet(_id, s_msg.c_str());
 	}
 	
 }

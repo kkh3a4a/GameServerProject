@@ -16,6 +16,8 @@ SOCKET DB_socket;
 WSA_OVER_EX DB_wsa_recv_over;
 int DB_prev_size = 0;
 std::map<std::pair<short, short>, short> World_Map;
+std::set<int> login_player;
+std::shared_mutex login_lock;
 //std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 //std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 
@@ -48,14 +50,36 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	{
 	case CS_LOGIN:
 	{
+		
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
 		string str = packet->name;
 		str.erase(0, 1); // p 제거
 		int id = std::stoi(str); // 문자열을 int형으로 변환합니다.
 		player->_db_id = id;
-		strcpy_s(player->_name, packet->name);
-		DB_player_login(player->_db_id, player->_name, o_id);
+		std::shared_lock<std::shared_mutex> loacl_lock(login_lock);
+		auto f = login_player.find(id);
+		auto e = login_player.end();
+		loacl_lock.unlock();
+
+
+		if(f == e)
+		{
+			std::unique_lock<std::shared_mutex> loacl_lock2(login_lock);
+			login_player.insert(id);
+			loacl_lock2.unlock();
+			strcpy_s(player->_name, packet->name);
+			DB_player_login(player->_db_id, player->_name, o_id);
+		}
+		else
+		{
+			SC_LOGIN_FAIL_PACKET s_packet;
+			s_packet.size = sizeof(SC_LOGIN_FAIL_PACKET);
+			s_packet.type = SC_LOGIN_FAIL;
+			player->send_packet(&s_packet);
+			login_fail_disconnect(o_id);
+		}
+
 		break;
 	}
 	case CS_MOVE:
@@ -344,13 +368,28 @@ void WSA_OVER_EX::disconnect(int o_id)
 	}
 	closesocket(player->_socket);
 	{
+		std::unique_lock<std::shared_mutex> loacl_lock2(login_lock);
+		login_player.erase(player->_db_id);
+		loacl_lock2.unlock();
+	}
+
+	{
 		std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 		player->_state = ST_FREE;
 	}
-
-	
 }
 
+void WSA_OVER_EX::login_fail_disconnect(int o_id)
+{
+	Player* player = reinterpret_cast<Player*>(objects[o_id]);
+	
+	closesocket(player->_socket);
+	
+	{
+		std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+		player->_state = ST_FREE;
+	}
+}
 void WSA_OVER_EX::wake_up_npc(int n_id)
 {
 	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);

@@ -54,6 +54,7 @@ void initialize_npc()
 		npc->_state = ST_INGAME;
 		npc->_id = npc_id;
 		npc->_n_wake = 0;
+		npc->_n_type = 1;
 		//npc->_last_hello_time = chrono::system_clock::now();
 		sprintf_s(npc->_name, "N%d", npc_id);
 		int my_zoneY, my_zoneX;
@@ -69,6 +70,15 @@ void initialize_npc()
 
 		lua_getglobal(L, "set_uid");
 		lua_pushnumber(L, npc_id);
+		lua_pcall(L, 1, 0, 0);
+		lua_pop(L, 1);// eliminate set_uid from stack after call
+
+		int t = rand() % 4;
+		npc->_n_type = t + 1;
+		npc->_level = npc->_n_type;
+		npc->agro = t / 2;
+		lua_getglobal(L, "set_agro");
+		lua_pushnumber(L, t);
 		lua_pcall(L, 1, 0, 0);
 		lua_pop(L, 1);// eliminate set_uid from stack after call
 
