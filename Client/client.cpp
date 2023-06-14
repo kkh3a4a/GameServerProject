@@ -202,10 +202,12 @@ public:
 		chrono::system_clock::time_point time = chrono::system_clock::now();
 		
 		
+		if (attack_range.size() != 0)
+		{
 			for (auto& p : attack_range)
 			{
 				int a = 150 - (p.second - time).count() / 100000;
-				m_attack_range.setColor(sf::Color(255, 0, 0, a ));
+				m_attack_range.setColor(sf::Color(255, 0, 0, a));
 				if (p.second > time) {
 					float rx = (p.first.first - g_left_x) * TILE_WIDTH + 1;
 					float ry = (p.first.second - g_top_y) * TILE_WIDTH + 1;
@@ -217,6 +219,7 @@ public:
 					attack_range.erase(make_pair(p.first.first, p.first.second));
 				}
 			}
+		}
 		
 	}
 	void set_name(const char str[]) {

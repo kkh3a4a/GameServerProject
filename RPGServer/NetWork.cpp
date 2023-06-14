@@ -509,6 +509,14 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 	case 2: if (x > 0) x--; break;
 	case 3: if (x < W_WIDTH - 1) x++; break;
 	}
+	if (abs(y - npc->_spawn_y) > 10)
+	{
+		y = npc->_y;
+	}
+	if (abs(x - npc->_spawn_x) > 10)
+	{
+		x = npc->_x;
+	}
 	if (World_Map.find(make_pair(x, y)) == World_Map.end())
 	{
 		npc->_x = x;

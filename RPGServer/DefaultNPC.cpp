@@ -193,6 +193,14 @@ void NPC::move_NPC()
 			{
 				y++;
 			}
+			if (abs(y - _spawn_y) > 10)
+			{
+				y = _y;
+			}
+			if (abs(x - _spawn_x) > 10)
+			{
+				x = _x;
+			}
 			if (World_Map.find(make_pair(x, y)) == World_Map.end())
 			{
 
