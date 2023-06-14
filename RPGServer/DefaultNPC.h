@@ -14,8 +14,10 @@ public:
 	bool _is_batte = false;
 	short _n_type = 1;						// 1, 2 peace 3, 4 agro
 											// 1, 3 로밍 2, 4 고정
+											// 2 : 네펜데스, 4: 다크네펜데스
 	bool agro = 0;
-	concurrency::concurrent_queue<pair<int, int>> move_queue;
+	concurrency::concurrent_queue<pair<short, short>> attack_range;
+	concurrency::concurrent_queue<pair<short, short>> move_queue;
 	lua_State* _L;
 	std::mutex _lua_lock;
 	chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();
@@ -24,4 +26,5 @@ public:
 	void heal_NPC();
 	void move_NPC();
 	void send_attack_range(int attack_time);
+	void do_range_attack();
 };

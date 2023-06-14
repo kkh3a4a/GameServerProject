@@ -183,9 +183,46 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			delete ex_over;
 			break;
 		}
+		case OP_NPC_RANGEATTACK:
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			{
+				npc->_lua_lock.lock();
+				lua_State* L = npc->_L;
+				for (auto p_id : npc->_view_list)
+				{
+					if (p_id >= MAX_USER)
+						break;
+					if (L != nullptr)
+					{
+						
+						pair<short, short> attack_range;
+						while (npc->attack_range.try_pop(attack_range))
+						{
+							lua_getglobal(L, "event_range_Attack");
+							lua_pushnumber(L, p_id);
+							lua_pushnumber(L, attack_range.first);
+							lua_pushnumber(L, attack_range.second);
+							int status = lua_pcall(L, 3, 0, 0);
+						}
+					}
+				}
+				npc->_lua_lock.unlock();
+			}
+			ex_over->do_npc_wait(key);
+			delete ex_over;
+			break;
+		}
 		case OP_NPC_MOVE:
 		{
 			ex_over->do_npc_move(static_cast<int>(key));
+
+			delete ex_over;
+			break;
+		}
+		case OP_NPC_WAIT:
+		{
+			ex_over->do_npc_wait(static_cast<int>(key));
 
 			delete ex_over;
 			break;

@@ -1,7 +1,7 @@
 myid = 99999;
 countmove = 4;
 agro = 1;
-
+type = 1;
 function set_uid(x)
    myid = x;
 end
@@ -9,6 +9,11 @@ end
 function set_agro(y)
    agro = y;
 end
+
+function set_type(t)
+   type = t;
+end
+
 
 function set_countmove(cnt)
 	countmove = cnt;
@@ -50,15 +55,25 @@ function event_object_Attack(def_id)
    def_y = API_get_y(def_id);
    my_x = API_get_x(myid);
    my_y = API_get_y(myid);
-   r_msg = math.random(0,2);
    if (math.abs(def_x - my_x) <= 1 ) then
       if (math.abs(def_y - my_y) <= 1) then
-			API_Attack(myid, def_id);
+			API_Default_Attack(myid, def_id);
+		end
+	end
+end
+
+function event_range_Attack(def_id ,attack_x, attack_y)
+   def_x = API_get_x(def_id);
+   def_y = API_get_y(def_id);
+   if (def_x == attack_x ) then
+      if (def_y == attack_y) then
+			API_Range_Attack(myid, def_id, 1000);
 		end
 	end
 end
 
 function event_NPC_Attack_msg()
+	r_msg = math.random(0,2);
 	if (agro == 0) then
 		if (r_msg == 0) then
 			API_SendMessage(myid, "Kill!")

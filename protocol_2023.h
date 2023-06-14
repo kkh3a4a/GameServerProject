@@ -144,6 +144,6 @@ struct SC_ATTACK_RANGE_PACKET {
 
 	int		id;
 	int		attack_time;
-	char	range[200];
+	char	range[400];
 };
 #pragma pack (pop)

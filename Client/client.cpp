@@ -38,6 +38,11 @@ sf::Texture* clearTexture;
 sf::Texture* fire;
 sf::Texture* stone;
 sf::Texture* wood;
+sf::Texture* monster1;
+sf::Texture* monster2;
+sf::Texture* monster3;
+sf::Texture* monster4;
+
 
 float borderWidth = 2.0f;
 sf::Color borderColor = sf::Color::Black;
@@ -50,6 +55,11 @@ sf::Sprite m_Wood;
 sf::Sprite chat;
 sf::Sprite m_attack_range;
 sf::Sprite p_attack_range;
+sf::Sprite m_monster1;
+sf::Sprite m_monster2;
+sf::Sprite m_monster3;
+sf::Sprite m_monster4;
+
 
 int stamina = 100;
 int max_stamina = 100;
@@ -279,12 +289,42 @@ void client_initialize()
 	fire = new sf::Texture;
 	stone = new sf::Texture;
 	wood = new sf::Texture;
+	monster1 = new sf::Texture;
+	monster2 = new sf::Texture;
+	monster3 = new sf::Texture;
+	monster4 = new sf::Texture;
+
 	board->loadFromFile("chessmap.bmp");
 	pieces->loadFromFile("chess2.png");
 	hpTexture->loadFromFile("hp_Image.png");
 	fire->loadFromFile("fire.png");
 	stone->loadFromFile("stone.png");
 	wood->loadFromFile("wood.png");
+	monster1->loadFromFile("monster1.png");
+	monster2->loadFromFile("monster2.png");
+	monster3->loadFromFile("monster3.png");
+	monster4->loadFromFile("monster4.png");
+	sf::Image image = monster3->copyToImage();
+
+	// 이미지의 크기
+	sf::Vector2u imageSize = image.getSize();
+
+	// 흰색 배경을 제거
+	sf::Color whiteColor(255, 255, 255);
+	for (unsigned int x = 0; x < imageSize.x; ++x)
+	{
+		for (unsigned int y = 0; y < imageSize.y; ++y)
+		{
+			sf::Color pixelColor = image.getPixel(x, y);
+			if (pixelColor == whiteColor)
+			{
+				// 흰색 배경을 투명으로 변경
+				image.setPixel(x, y, sf::Color::Transparent);
+			}
+		}
+	}
+	image.saveToFile("modified_image.png");
+
 	if (false == g_font.loadFromFile("cour.ttf")) {
 		cout << "Font Loading Error!\n";
 		exit(-1);
@@ -302,7 +342,6 @@ void client_initialize()
 	m_Stamina.setColor(sf::Color(0,  0, 200, 200));
 
 	{
-		
 		m_fire.setTexture(*fire);
 		sf::Vector2u originalSize = fire->getSize();
 		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
@@ -332,6 +371,34 @@ void client_initialize()
 		p_attack_range.setTextureRect(sf::IntRect(1, 1, TILE_WIDTH, TILE_WIDTH));
 	}
 
+	{
+		m_monster1.setTexture(*monster1);
+		sf::Vector2u originalSize = monster1->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_monster1.setColor(sf::Color(255, 0, 0, 255));
+		m_monster1.setScale(scale);
+	}
+	{
+		m_monster2.setTexture(*monster2);
+		sf::Vector2u originalSize = monster2->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_monster1.setColor(sf::Color(0, 255, 0, 255));
+		m_monster2.setScale(scale);
+	}
+	{
+		m_monster3.setTexture(*monster3);
+		sf::Vector2u originalSize = monster3->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_monster1.setColor(sf::Color(0, 0, 255, 255));
+		m_monster3.setScale(scale);
+	}
+	{
+		m_monster4.setTexture(*monster4);
+		sf::Vector2u originalSize = monster4->getSize();
+		sf::Vector2f scale(40.f / originalSize.x, 40.f / originalSize.y);
+		m_monster1.setColor(sf::Color(255, 255, 0, 255));
+		m_monster4.setScale(scale);
+	}
 	//m_Stone.setTextureRect(sf::IntRect(0,0, TILE_WIDTH, TILE_WIDTH));
 }
 
@@ -382,10 +449,18 @@ void ProcessPacket(char* ptr)
 			players[id].show();
 		}
 		else {
-			players[id] = OBJECT{ *pieces, 256, 0, 64, 64 };
+			if (my_packet->name[0] == 'Q')
+				players[id] = OBJECT{ *monster1, 0, 0, 64, 64 };
+			else if (my_packet->name[0] == 'W')
+				players[id] = OBJECT{ *monster2, 0, 0, 64, 64 };
+			else if (my_packet->name[0] == 'E')
+				players[id] = OBJECT{ *monster3, 0, 0, 64, 64 }; 
+			else if (my_packet->name[0] == 'R')
+				players[id] = OBJECT{ *monster4, 0, 0, 64, 64 };
 			players[id].id = id;
 			players[id].move(my_packet->x, my_packet->y);
 			players[id].set_name(my_packet->name);
+			
 			players[id].set_Sprite_scale((float)TILE_WIDTH / 64, (float)TILE_WIDTH / 64);
 			players[id].show();
 		}
@@ -622,7 +697,7 @@ int main()
 	p.type = CS_LOGIN;
 
 
-	cout << "insert my id : ";
+	cout << "insert my id (only integer) : ";
 	cin >> g_myid;
 	string player_name{ "P" };
 	player_name += to_string(g_myid);

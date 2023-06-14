@@ -32,7 +32,7 @@ extern int DB_prev_size;
 extern SOCKET DB_socket;
 ////////////
 extern std::map<std::pair<short, short>, short> World_Map;
-enum EVENT_TYPE { EV_RANDOM_MOVE, EV_RESPAWN, EV_ATTACK, EV_DEFENCE, EV_HEAL, EV_MOVE};
+enum EVENT_TYPE { EV_RANDOM_MOVE, EV_RESPAWN, EV_WAIT,EV_ATTACK, EV_RANGEATTACK, EV_DEFENCE, EV_HEAL, EV_MOVE};
 
 constexpr int VIEW_RANGE = 6;
 extern  std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
@@ -46,9 +46,11 @@ enum IOCPOP
 	OP_NPC_RANDOMMOVE,
 	OP_NPC_MOVE,
 	OP_NPC_RESPAWN,
+	OP_NPC_RANGEATTACK,
 	OP_NPC_HEAL,
 	OP_NPC_ATTACK,
 	OP_NPC_DEFENCE,
+	OP_NPC_WAIT,
 	OP_AI_HELLO,
 	OP_AI_BYE,
 	
@@ -77,6 +79,7 @@ public:
 	void do_npc_ramdom_move(int o_id);
 	void set_accept_over();
 	void do_npc_move(int n_id);
+	void do_npc_wait(int n_id);
 	
 };
 extern WSA_OVER_EX DB_wsa_recv_over;
@@ -86,6 +89,8 @@ extern WSA_OVER_EX DB_wsa_recv_over;
 int get_new_player_id();
 
 bool can_see(int p1, int p2);
+
+int is_agro(int p1, int p2);
 
 bool is_NPC(int _id);
 /// <summary> LUA Script
@@ -97,7 +102,10 @@ int API_SendMessage(lua_State* L);
 
 int API_Defence(lua_State* L);
 
-int API_Attack(lua_State* L);
+int API_Default_Attack(lua_State* L);
+
+int API_Range_Attack(lua_State* L);
+
 ///////////////////////////////////////////////////////
 void zone_check(int x, int y, set<int>&);
 class EVENT

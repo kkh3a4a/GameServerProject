@@ -97,9 +97,18 @@ void NPC::respawn_NPC()
 	}
 
 
-
-	EVENT ev{ _id, EV_RANDOM_MOVE, chrono::system_clock::now() + 1s };
-	timer_queue.push(ev);
+	if (_n_type == 1 || _n_type == 3)
+	{
+		EVENT ev(_id, EV_RANDOM_MOVE, chrono::system_clock::now());
+		//l_q.lock();
+		timer_queue.push(ev);
+	}
+	else if (_n_type == 2 || _n_type == 4)
+	{
+		EVENT ev(_id, EV_WAIT, chrono::system_clock::now());
+		//l_q.lock();
+		timer_queue.push(ev);
+	}
 }
 
 void NPC::heal_NPC()
@@ -370,7 +379,7 @@ void NPC::move_NPC()
 		}
 	}
 	else {
-		pair<int, int> point;
+		pair<short, short> point;
 		if(move_queue.try_pop(point))
 		{
 			_x = point.first;
@@ -465,7 +474,7 @@ void NPC::send_attack_range(int attack_time)
 	packet.type = SC_ATTACK_RANGE;
 	packet.attack_time = attack_time;
 	string s;
-	if(_n_type == 1)
+	if((_n_type % 2) == 1)
 	{
 		for (int i = -1; i <= 1; ++i)
 		{
@@ -478,9 +487,13 @@ void NPC::send_attack_range(int attack_time)
 			}
 		}
 	}
-	else if (_n_type == 2)
+	else if ((_n_type % 2) == 0)
 	{
-
+		char buffer[100];
+		attack_range.clear();
+		sprintf_s(buffer, "%d %d\n", objects[_last_attacker]->_x, objects[_last_attacker]->_y);
+		s += buffer;
+		attack_range.push(make_pair(objects[_last_attacker]->_x, objects[_last_attacker]->_y));
 	}
 	strcpy_s(packet.range, sizeof(char) * (s.size() + 1), s.c_str());
 	packet.size = sizeof(SC_ATTACK_RANGE_PACKET) - (200 - s.size() - 1);
@@ -493,6 +506,37 @@ void NPC::send_attack_range(int attack_time)
 		pl->send_packet(&packet);
 	}
 	
+}
+
+void NPC::do_range_attack()
+{
+	if (_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
+		return;
+	Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
+	if (pl->_last_dead_time > chrono::system_clock::now() - 3s || pl->_state != ST_INGAME)
+	{
+		EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
+		//l_q.lock();
+		timer_queue.push(ev);
+		_is_batte = false;
+		return;
+	}
+	if (abs(objects[_last_attacker]->_x - _x) <= 5 && abs(objects[_last_attacker]->_y - _y) <= 5)
+	{
+		int attack_time = 1000;
+		_lua_lock.lock();
+		lua_getglobal(_L, "event_NPC_Attack_msg");
+		lua_pcall(_L, 0, 0, 0);
+		_lua_lock.unlock();
+		EVENT ev{ _id, EV_RANGEATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
+		timer_queue.push(ev);
+		send_attack_range(attack_time);
+		return;
+	}
+	EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
+	//l_q.lock();
+	timer_queue.push(ev);
+	return;
 }
 
 

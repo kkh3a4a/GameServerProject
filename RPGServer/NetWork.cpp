@@ -395,14 +395,32 @@ void WSA_OVER_EX::wake_up_npc(int n_id)
 	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);
 	if(!npc->_is_batte)
 	{
-		EVENT ev(n_id, EV_RANDOM_MOVE, chrono::system_clock::now());
-		//l_q.lock();
-		timer_queue.push(ev);
+		if(npc->_n_type == 1 || npc->_n_type == 3)
+		{
+			EVENT ev(n_id, EV_RANDOM_MOVE, chrono::system_clock::now());
+			//l_q.lock();
+			timer_queue.push(ev);
+		}
+		else if (npc->_n_type == 2 || npc->_n_type == 4)
+		{
+			EVENT ev(n_id, EV_WAIT, chrono::system_clock::now());
+			//l_q.lock();
+			timer_queue.push(ev);
+		}
 	}
 	else{
-		EVENT ev(n_id, EV_MOVE, chrono::system_clock::now());
-		//l_q.lock();
-		timer_queue.push(ev);
+		if (npc->_n_type == 1 || npc->_n_type == 3)
+		{
+			EVENT ev(n_id, EV_MOVE, chrono::system_clock::now());
+			//l_q.lock();
+			timer_queue.push(ev);
+		}
+		else if (npc->_n_type == 2 || npc->_n_type == 4)
+		{
+			EVENT ev(n_id, EV_RANGEATTACK, chrono::system_clock::now());
+			//l_q.lock();
+			timer_queue.push(ev);
+		}
 	}
 	//l_q.unlock();
 }
@@ -464,9 +482,21 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 			if (can_see(pl->_id, n_id))
 				near_list.insert(pl->_id);
 		}
+
 		for (auto& p_id : near_list) {
 			Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+			if(npc->_n_type == 3)
+			{
+				if (is_agro(pl->_id, n_id)) {
+					npc->_is_batte = true;
+					do_npc_move(n_id);
+					return;
+				}
+			}
+			
 			std::shared_lock<std::shared_mutex> lock(pl->_vl);
+			
+
 			if (pl->_view_list.count(n_id)) {
 				lock.unlock();
 				pl->send_move_packet(n_id);
@@ -509,6 +539,70 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 	//l_q.unlock();	
 }
 
+void WSA_OVER_EX::do_npc_wait(int n_id)
+{
+	NPC* npc = reinterpret_cast<NPC*>(objects[n_id]);
+	if (npc->_is_batte)
+	{
+		npc->do_range_attack();
+		return;
+	}
+	if (npc->_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
+		return;
+
+	unordered_set<int> near_list;
+
+	set<int> z_list;
+	zone_check(npc->_x, npc->_y, z_list);
+	for (auto& p_id : z_list) {
+		if (p_id >= MAX_USER)
+			break;
+		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+		if (pl->_state != ST_INGAME) continue;
+		if (can_see(pl->_id, n_id))
+			near_list.insert(pl->_id);
+	}
+	for (auto& p_id : near_list) {
+		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
+		std::shared_lock<std::shared_mutex> lock(pl->_vl);
+		if (npc->_n_type == 4)
+		{
+			if (is_agro(pl->_id, n_id)) {
+				npc->_is_batte = true;
+				npc->do_range_attack();
+				return;
+			}
+		}
+		if (pl->_view_list.count(n_id)) {
+			lock.unlock();
+		}
+		else {
+			lock.unlock();
+			pl->send_add_object_packet(n_id);
+		}
+	}
+	if (near_list.size() == 0)
+	{
+		bool before_wake = npc->_n_wake;
+		if (before_wake == 1)
+		{
+			if (!CAS(reinterpret_cast<volatile int*>(&npc->_n_wake), before_wake, 0))
+			{
+
+			}
+			else
+			{
+				return;
+			}
+		}
+		else
+			return;
+	}
+	
+
+	EVENT ev{ n_id, EV_WAIT,chrono::system_clock::now() + 1s };
+	timer_queue.push(ev);
+}
 
 void WSA_OVER_EX::do_npc_move(int n_id)
 {
@@ -674,7 +768,7 @@ int API_Defence(lua_State* L)
 				Player* player = reinterpret_cast<Player*>(objects[atk_id]);
 				player->kill_NPC(npc->_id);
 			}
-			npc->dead_NPC();
+ 			npc->dead_NPC();
 		}
 	}
 	lua_pop(L, 3);
@@ -690,7 +784,7 @@ int API_Defence(lua_State* L)
 	return 0;
 }
 
-int API_Attack(lua_State* L)
+int API_Default_Attack(lua_State* L)
 {
 	int atk_id = (int)lua_tointeger(L, -2);
 	int def_id = (int)lua_tointeger(L, -1);
@@ -731,6 +825,49 @@ int API_Attack(lua_State* L)
 	return 0;
 }
 
+int API_Range_Attack(lua_State* L)
+{
+	int atk_id = (int)lua_tointeger(L, -3);
+	int def_id = (int)lua_tointeger(L, -2);
+	int attack_time = (int)lua_tointeger(L, -1);
+	if (objects[atk_id]->_hp <= 0)
+	{
+		lua_pop(L, 3);
+		return 0;
+	}
+	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
+	{
+		EVENT ev{ def_id, EV_HEAL, chrono::system_clock::now() + 5s };
+		//l_q.lock();
+		timer_queue.push(ev);
+	}
+	objects[def_id]->_hp -= objects[atk_id]->_dmg;
+	cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	lua_pop(L, 4);
+
+	if (objects[def_id]->_hp <= 0)
+	{
+		Player* player = reinterpret_cast<Player*>(objects[def_id]);
+		player->dead_player();
+		if (atk_id >= MAX_USER)
+		{
+			NPC* npc = reinterpret_cast<NPC*>(objects[atk_id]);
+			npc->_is_batte = false;
+		}
+	}
+	{
+		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
+		for (auto& p_id : objects[def_id]->_view_list) {
+			if (p_id >= MAX_USER)
+				continue;
+			Player* player = reinterpret_cast<Player*>(objects[p_id]);
+			player->send_change_hp(def_id);
+		}
+	}
+
+	return 0;
+}
+
 
 EVENT::EVENT()
 {
@@ -765,4 +902,11 @@ void DB_do_recv()
 	DB_wsa_recv_over._iocpop = DB_RECV;
 
 	WSARecv(DB_socket, &DB_wsa_recv_over._wsabuf, 1, 0, &recv_flag, &DB_wsa_recv_over._wsaover, 0);
+}
+
+int is_agro(int o1, int o2)
+{
+	if (abs(objects[o1]->_x - objects[o2]->_x) > 5) return false;
+	if (abs(objects[o1]->_y - objects[o2]->_y) > 5) return false;
+	return ((abs(objects[o1]->_x - objects[o2]->_x) + (abs(objects[o1]->_y - objects[o2]->_y))));
 }

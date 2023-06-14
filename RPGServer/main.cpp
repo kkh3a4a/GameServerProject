@@ -56,7 +56,7 @@ void initialize_npc()
 		npc->_n_wake = 0;
 		npc->_n_type = 1;
 		//npc->_last_hello_time = chrono::system_clock::now();
-		sprintf_s(npc->_name, "N%d", npc_id);
+		
 		int my_zoneY, my_zoneX;
 
 		my_zoneY = npc->_y / ZONE_SEC;
@@ -73,11 +73,25 @@ void initialize_npc()
 		lua_pcall(L, 1, 0, 0);
 		lua_pop(L, 1);// eliminate set_uid from stack after call
 
-		int t = rand() % 4;
-		npc->_n_type = t + 1;
+		int t = rand() % 4 + 1;
+		if(t == 1)
+			sprintf_s(npc->_name, "Q%d", npc_id);
+		if (t == 2)
+			sprintf_s(npc->_name, "W%d", npc_id);
+		if (t == 3)
+			sprintf_s(npc->_name, "E%d", npc_id);
+		if (t == 4)
+		sprintf_s(npc->_name, "R%d", npc_id);
+			npc->_n_type = t;
 		npc->_level = npc->_n_type;
+		npc->_max_hp = npc->_hp = 100 + (npc->_level * npc->_level * 10);
 		npc->agro = t / 2;
 		lua_getglobal(L, "set_agro");
+		lua_pushnumber(L, npc->agro);
+		lua_pcall(L, 1, 0, 0);
+		lua_pop(L, 1);// eliminate set_uid from stack after call
+
+		lua_getglobal(L, "set_type");
 		lua_pushnumber(L, t);
 		lua_pcall(L, 1, 0, 0);
 		lua_pop(L, 1);// eliminate set_uid from stack after call
@@ -86,7 +100,8 @@ void initialize_npc()
 		lua_register(L, "API_get_x", API_get_x);
 		lua_register(L, "API_get_y", API_get_y);
 		lua_register(L, "API_Defence", API_Defence);
-		lua_register(L, "API_Attack", API_Attack);
+		lua_register(L, "API_Default_Attack", API_Default_Attack);
+		lua_register(L, "API_Range_Attack", API_Range_Attack);
 	}
 	cout << "NPC_initialize success" << endl;
 }
