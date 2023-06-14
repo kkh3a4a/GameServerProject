@@ -63,7 +63,6 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		auto e = login_player.end();
 		loacl_lock.unlock();
 
-
 		if(f == e)
 		{
 			std::unique_lock<std::shared_mutex> loacl_lock2(login_lock);
@@ -339,11 +338,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		my_zoneX = player->_x / ZONE_SEC;
 		zone[my_zoneY][my_zoneX]->ADD(player->_id);
 
-		player->send_login_info_packet();
+		
 		{
 			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
 			player->_state = ST_INGAME;
 		}
+		player->send_login_info_packet();
 		set<int> z_list;
 		zone_check(player->_x, player->_y, z_list);
 		for (auto& p_id : z_list) {
@@ -817,7 +817,7 @@ int API_Defence(lua_State* L)
 		npc->_last_attacker = atk_id;
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	//cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	if (objects[def_id]->_hp <= 0)
 	{
 		if (def_id >= MAX_USER)
@@ -853,14 +853,17 @@ int API_Default_Attack(lua_State* L)
 		lua_pop(L, 3);
 		return 0;
 	}
-	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
+	if (CAS(&objects[def_id]->_hp, objects[def_id]->_max_hp, objects[def_id]->_hp - objects[atk_id]->_dmg))
 	{
 		EVENT ev{ def_id, EV_HEAL, chrono::system_clock::now() + 5s };
 		//l_q.lock();
 		timer_queue.push(ev);
 	}
-	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	//cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	else
+	{
+		objects[def_id]->_hp -= objects[atk_id]->_dmg;
+	}
+	cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	lua_pop(L, 3);
 	{
 		Player* player = reinterpret_cast<Player*>(objects[def_id]);
@@ -903,17 +906,20 @@ int API_Range_Attack(lua_State* L)
 	int attack_time = (int)lua_tointeger(L, -1);
 	if (objects[atk_id]->_hp <= 0)
 	{
-		lua_pop(L, 3);
+		lua_pop(L, 4);
 		return 0;
 	}
-	if (objects[def_id]->_hp == objects[def_id]->_max_hp)
+	if (CAS(&objects[def_id]->_hp, objects[def_id]->_max_hp, objects[def_id]->_hp - objects[atk_id]->_dmg))
 	{
 		EVENT ev{ def_id, EV_HEAL, chrono::system_clock::now() + 5s };
 		//l_q.lock();
 		timer_queue.push(ev);
 	}
-	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	//cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	else
+	{
+		objects[def_id]->_hp -= objects[atk_id]->_dmg;
+	}
+	cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	lua_pop(L, 4);
 
 	if (objects[def_id]->_hp <= 0)

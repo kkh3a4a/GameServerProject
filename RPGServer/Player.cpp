@@ -44,6 +44,7 @@ void Player::send_login_info_packet()
 	packet.y = _y;
 	packet.max_hp = _max_hp;
 	packet.hp = _hp;
+	if (_state != ST_INGAME) return;
 	send_packet(&packet);
 }
 
@@ -65,6 +66,7 @@ void Player::send_add_object_packet(int o_id)
 	packet.type = SC_ADD_OBJECT;
 	packet.x = objects[o_id]->_x;
 	packet.y = objects[o_id]->_y;
+	if (_state != ST_INGAME) return;
 	send_packet(&packet);
 
 	if(o_id < MAXMOVEOBJECT)
@@ -87,6 +89,7 @@ void Player::send_move_packet(int o_id)
 			p.x = objects[o_id]->_x;
 			p.y = objects[o_id]->_y;
 			p.move_time = objects[o_id]->_last_move_time;
+			if (_state != ST_INGAME) return;
 			send_packet(&p);
 		}
 		else {
@@ -111,6 +114,7 @@ void Player::send_remove_object_packet(int o_id)
 	p.id = o_id;
 	p.size = sizeof(p);
 	p.type = SC_REMOVE_OBJECT;
+	if (_state != ST_INGAME) return;
 	send_packet(&p);
 }
 
@@ -125,7 +129,7 @@ void Player::send_chat_packet(int p_id, const char* mess)
 	packet.type = SC_CHAT;
 	strcpy_s(packet.mess, msg.c_str());
 	packet.size = sizeof(SC_CHAT_PACKET) - (CHAT_SIZE - msg.size());
-
+	if (_state != ST_INGAME) return;
 	send_packet(&packet);
 }
 
@@ -138,9 +142,13 @@ void Player::send_change_hp(int o_id)
 		packet.max_hp = objects[o_id]->_max_hp;
 		packet.size = sizeof(packet);
 		packet.type = SC_HP_CHANGE;
+		if (_state != ST_INGAME) return;
 		send_packet(&packet);
 	}
+	_hpcount++;
+	if(_hpcount > 20)
 	{
+		_hpcount = 0;
 		SD_PLAYER_CHANGE_STAT_PACKET packet;
 		packet.size = sizeof(packet);
 		packet.type = SD_PLAYER_CHANGE_STAT;
@@ -169,7 +177,7 @@ void Player::send_location_DB()
 void Player::kill_NPC(int n_id)
 {
 	
-  	_exp += (objects[n_id]->_level * objects[n_id]->_level * 20);
+  	_exp += (objects[n_id]->_level * objects[n_id]->_level * 2);
 	cout << "P" << _db_id << " kill " << n_id << " [get N" << objects[n_id]->_level * objects[n_id]->_level * 20 << " exp]\n";
 	if (_exp >= _level * 100)
 	{
@@ -209,7 +217,7 @@ void Player::dead_player()
 		packet.hp = _max_hp;
 		DB_send_packet(&packet);
 	}
-	EVENT ev{ _id, EV_RESPAWN, chrono::system_clock::now() + 5s };
+	EVENT ev{ _id, EV_RESPAWN, chrono::system_clock::now() + 30s };
 	//l_q.lock();
 	timer_queue.push(ev);
 

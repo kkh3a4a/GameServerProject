@@ -14,7 +14,7 @@ using namespace std;
 
 #define UNICODE  
 
-WSA_OVER_EX g_a_over;
+WSA_OVER_EX g_a_over[20];
 void initObject()
 {
 	for (int i = 0; i < MAX_USER; ++i)
@@ -88,8 +88,9 @@ void initialize_npc()
 	
 		
 		npc->_level = npc->_n_type;
-		npc->_max_hp = npc->_hp = 100 + (npc->_level * npc->_level * 10);
+		npc->_max_hp = npc->_hp = 100 + (npc->_level * 10);
 		npc->agro = t / 2;
+		npc->_dmg = 2 * npc->_level;
 		lua_getglobal(L, "set_agro");
 		lua_pushnumber(L, npc->agro);
 		lua_pcall(L, 1, 0, 0);
@@ -225,17 +226,21 @@ int main() {
 	h_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_s_socket), h_iocp, 999999, 0);
 	g_c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	g_a_over._iocpop = OP_ACCEPT;
-	AcceptEx(g_s_socket, g_c_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
+	int num_threads = std::thread::hardware_concurrency();
+	for (int i = 0; i < num_threads; ++i)
+	{
+		g_a_over[i]._iocpop = OP_ACCEPT;
+		AcceptEx(g_s_socket, g_c_socket, g_a_over[i]._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over[i]._wsaover);
+	}
 	connect_DB();
 	//createMap();
 	ReadMap();
 	initialize_npc();
 	thread timer_thread{ TimerThread };
 	vector <thread> worker_threads;
-	int num_threads = std::thread::hardware_concurrency();
+	
 	for (int i = 0; i < num_threads; ++i)
-		worker_threads.emplace_back(worker_thread, g_a_over);
+		worker_threads.emplace_back(worker_thread, g_a_over[i]);
 	for (auto& th : worker_threads)
 		th.join();
 	

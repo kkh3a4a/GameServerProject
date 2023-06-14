@@ -20,7 +20,7 @@ using namespace chrono;
 extern HWND		hWnd;
 
 const static int MAX_TEST = 5000;
-const static int MAX_CLIENTS = MAX_TEST * 3;
+const static int MAX_CLIENTS = MAX_TEST * 2;
 const static int INVALID_ID = -1;
 const static int MAX_PACKET_SIZE = 512;
 const static int MAX_BUFF_SIZE = 512;
@@ -207,7 +207,7 @@ void Worker_Thread()
 			//std::cout << "RECV from Client :" << ci;
 			//std::cout << "  IO_SIZE : " << io_size << std::endl;
 			unsigned char* buf = g_clients[ci].recv_over.IOCP_buf;
-			unsigned short* ptr_size = reinterpret_cast<unsigned short*>(g_clients[ci].recv_over.IOCP_buf);
+			short* ptr_size = reinterpret_cast<short*>(g_clients[ci].recv_over.IOCP_buf);
 			unsigned psize = g_clients[ci].curr_packet_size;
 			unsigned pr_size = g_clients[ci].prev_packet_data;
 			while (io_size > 0) {
@@ -220,7 +220,7 @@ void Worker_Thread()
 					ProcessPacket(static_cast<int>(ci), packet);
 					io_size -= psize - pr_size;
 					buf += psize - pr_size;
-					ptr_size = reinterpret_cast<unsigned short*>(buf);
+					ptr_size = reinterpret_cast<short*>(buf);
 					psize = 0; pr_size = 0;
 				}
 				else {
@@ -311,7 +311,9 @@ void Adjust_Number_Of_Client()
 
 	int Result = WSAConnect(g_clients[num_connections].client_socket, (sockaddr*)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 	if (0 != Result) {
-		error_display("WSAConnect : ", GetLastError());
+		cout << "Error connect" << endl;
+		return;
+		//error_display("WSAConnect : ", GetLastError());
 	}
 
 	g_clients[num_connections].curr_packet_size = 0;

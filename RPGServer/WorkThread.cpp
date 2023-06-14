@@ -63,7 +63,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			break;
 		}
 		case OP_RECV: {
-
+			
 			Player* player = reinterpret_cast<Player*>(objects[key]);
 			int remain_data = num_bytes + player->_prev_size;
 			char* buf = ex_over->_buf;
@@ -118,7 +118,6 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			else if (key < MAX_USER)
 			{
 				Player* player = reinterpret_cast<Player*>(objects[key]);
-
 				player->respawn_player();
 			}
 			break;
@@ -149,6 +148,11 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			if (objects[key]->_hp >= objects[key]->_max_hp)
 			{
 				objects[key]->_hp = objects[key]->_max_hp;
+				if( key < MAX_USER )
+				{
+					Player* m_player = reinterpret_cast<Player*>(objects[key]);
+					m_player->send_change_hp(objects[key]->_id);
+				}
 				for (auto& p_id : objects[key]->_view_list) {
 					if (p_id >= MAX_USER)
 						continue;
