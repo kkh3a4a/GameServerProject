@@ -57,6 +57,7 @@ void NPC::respawn_NPC()
 	_y = _spawn_y;
 	_last_attacker = 0;
 	_is_batte = false;
+	_view_list.clear();
 	set<int> z_list;
 	zone_check(_x, _y, z_list);
 	for (auto& p_id : z_list) {
@@ -73,7 +74,10 @@ void NPC::respawn_NPC()
 		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 		pl->send_add_object_packet(_id);
 	}
-
+	{
+		std::unique_lock<std::shared_mutex> lock(_vl);
+		_view_list = near_list;
+	}
 	if (near_list.size() == 0)
 	{
 		bool before_wake = _n_wake;
@@ -126,6 +130,13 @@ void NPC::move_NPC()
 	Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
 	if (pl->_last_dead_time > chrono::system_clock::now() - 3s || pl->_state != ST_INGAME)
 	{
+		EVENT ev{ _id, EV_RANDOM_MOVE,chrono::system_clock::now() + 1s };
+		//l_q.lock();
+		timer_queue.push(ev);
+		_is_batte = false;
+		return;
+	}
+	if (abs(pl->_x - _x) > VIEW_RANGE || abs(pl->_y - _y) > VIEW_RANGE) {
 		EVENT ev{ _id, EV_RANDOM_MOVE,chrono::system_clock::now() + 1s };
 		//l_q.lock();
 		timer_queue.push(ev);
@@ -246,6 +257,10 @@ void NPC::move_NPC()
 				else
 					return;
 			}
+			{
+				std::unique_lock<std::shared_mutex> lock(_vl);
+				_view_list = near_list;
+			}
 			if (abs(objects[_last_attacker]->_x - _x) <= 1 && abs(objects[_last_attacker]->_y - _y) <= 1)
 			{
 				int attack_time = 1000;
@@ -258,6 +273,7 @@ void NPC::move_NPC()
 				send_attack_range(attack_time);
 				return;
 			}
+
 		}
 		else
 		{
@@ -474,6 +490,7 @@ void NPC::send_attack_range(int attack_time)
 	packet.type = SC_ATTACK_RANGE;
 	packet.attack_time = attack_time;
 	string s;
+
 	if((_n_type % 2) == 1)
 	{
 		for (int i = -1; i <= 1; ++i)
@@ -513,6 +530,13 @@ void NPC::do_range_attack()
 	if (_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
 		return;
 	Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
+	if (abs(pl->_x - _x) > VIEW_RANGE || abs(pl->_y - _y) > VIEW_RANGE) {
+		EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
+		//l_q.lock();
+		timer_queue.push(ev);
+		_is_batte = false;
+		return;
+	}
 	if (pl->_last_dead_time > chrono::system_clock::now() - 3s || pl->_state != ST_INGAME)
 	{
 		EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
@@ -533,9 +557,11 @@ void NPC::do_range_attack()
 		send_attack_range(attack_time);
 		return;
 	}
+
 	EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
 	//l_q.lock();
 	timer_queue.push(ev);
+	_is_batte = false;
 	return;
 }
 

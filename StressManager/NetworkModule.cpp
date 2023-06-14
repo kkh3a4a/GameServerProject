@@ -19,11 +19,11 @@ using namespace chrono;
 
 extern HWND		hWnd;
 
-const static int MAX_TEST = 50000;
+const static int MAX_TEST = 5000;
 const static int MAX_CLIENTS = MAX_TEST * 3;
 const static int INVALID_ID = -1;
-const static int MAX_PACKET_SIZE = 255;
-const static int MAX_BUFF_SIZE = 255;
+const static int MAX_PACKET_SIZE = 512;
+const static int MAX_BUFF_SIZE = 512;
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -171,8 +171,12 @@ void ProcessPacket(int ci, unsigned char packet[])
 		break;
 	}
 	case SC_CHAT: break;
-	default: MessageBox(hWnd, L"Unknown Packet Type", L"ERROR", 0);
+	case SC_ATTACK_RANGE: break;
+	default: 
+		break;
+		MessageBox(hWnd, L"Unknown Packet Type", L"ERROR", 0);
 		while (true);
+
 	}
 }
 

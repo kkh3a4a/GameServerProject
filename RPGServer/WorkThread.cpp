@@ -101,16 +101,26 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		}
 		case OP_NPC_RESPAWN:
 		{
-			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+
+			if(key >= MAX_USER)
 			{
-				npc->_n_wake = false;
-				//cout << "respawn " << npc->_id << endl;
-				npc->_hp = npc->_max_hp;
-				std::unique_lock<std::shared_mutex> lock(npc->_s_lock);				
-				npc->_state = ST_INGAME;
-				
+				NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+				{
+					npc->_n_wake = false;
+					//cout << "respawn " << npc->_id << endl;
+					npc->_hp = npc->_max_hp;
+					std::unique_lock<std::shared_mutex> lock(npc->_s_lock);
+					npc->_state = ST_INGAME;
+
+				}
+				npc->respawn_NPC();
 			}
-			npc->respawn_NPC();
+			else if (key < MAX_USER)
+			{
+				Player* player = reinterpret_cast<Player*>(objects[key]);
+
+				player->respawn_player();
+			}
 			break;
 		}
 		case OP_NPC_DEFENCE:

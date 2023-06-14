@@ -29,4 +29,5 @@ public:
 	void send_location_DB();
 	void kill_NPC(int n_id);
 	void dead_player();
+	void respawn_player();
 };

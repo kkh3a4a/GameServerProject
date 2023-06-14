@@ -85,6 +85,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	case CS_MOVE:
 	{
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
+
+		{
+			std::shared_lock<std::shared_mutex> loacl_lock(player->_s_lock);
+			if (player->_state != ST_INGAME)
+				break;
+		}
 		CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(pk);
 		if (player->_p_last_move_time < (chrono::system_clock::now() - chrono::milliseconds(100)))
 		{
@@ -193,6 +199,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 						}
 					}
 				}
+
+				{
+					std::unique_lock<std::shared_mutex> lock(player->_vl);
+					player->_view_list = new_vl;
+				}
+
 				player->_movecount++;
 				if (player->_movecount > 20)
 				{
@@ -208,6 +220,11 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	{
 		CS_ATTACK_PACKET* packet = reinterpret_cast<CS_ATTACK_PACKET*>(pk);
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
+		{
+			std::shared_lock<std::shared_mutex> loacl_lock(player->_s_lock);
+			if (player->_state != ST_INGAME)
+				break;
+		}
 		{
 			if(player->_last_attack_time < chrono::system_clock::now() - 1s)
 			{
@@ -241,6 +258,12 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	case CS_CHAT:
 	{
 		CS_CHAT_PACKET* packet = reinterpret_cast<CS_CHAT_PACKET*>(pk);
+		Player* player1 = reinterpret_cast<Player*>(objects[o_id]);
+		{
+			std::shared_lock<std::shared_mutex> loacl_lock(player1->_s_lock);
+			if (player1->_state != ST_INGAME)
+				break;
+		}
 		set<int> z_list;
 		zone_check(objects[o_id]->_x, objects[o_id]->_y, z_list);
 
@@ -508,6 +531,7 @@ void WSA_OVER_EX::do_npc_ramdom_move(int n_id)
 			if(npc->_n_type == 3)
 			{
 				if (is_agro(pl->_id, n_id)) {
+					npc->_last_attacker = pl->_id;
 					npc->_is_batte = true;
 					do_npc_move(n_id);
 					return;
@@ -588,6 +612,7 @@ void WSA_OVER_EX::do_npc_wait(int n_id)
 		if (npc->_n_type == 4)
 		{
 			if (is_agro(pl->_id, n_id)) {
+				npc->_last_attacker = pl->_id;
 				npc->_is_batte = true;
 				npc->do_range_attack();
 				return;
@@ -604,6 +629,7 @@ void WSA_OVER_EX::do_npc_wait(int n_id)
 	if (near_list.size() == 0)
 	{
 		bool before_wake = npc->_n_wake;
+		npc->_is_batte = false;
 		if (before_wake == 1)
 		{
 			if (!CAS(reinterpret_cast<volatile int*>(&npc->_n_wake), before_wake, 0))
@@ -617,6 +643,10 @@ void WSA_OVER_EX::do_npc_wait(int n_id)
 		}
 		else
 			return;
+	}
+	{
+		std::unique_lock<std::shared_mutex> lock(npc->_vl);
+		npc->_view_list = near_list;
 	}
 	
 
@@ -777,7 +807,7 @@ int API_Defence(lua_State* L)
 		npc->_last_attacker = atk_id;
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	//cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
 	if (objects[def_id]->_hp <= 0)
 	{
 		if (def_id >= MAX_USER)
@@ -820,8 +850,12 @@ int API_Default_Attack(lua_State* L)
 		timer_queue.push(ev);
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	//cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
 	lua_pop(L, 3);
+	{
+		Player* player = reinterpret_cast<Player*>(objects[def_id]);
+		player->send_change_hp(def_id);
+	}
 	if (objects[def_id]->_hp <= 0)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[def_id]);
@@ -862,7 +896,7 @@ int API_Range_Attack(lua_State* L)
 		timer_queue.push(ev);
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
+	//cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]" << endl;
 	lua_pop(L, 4);
 
 	if (objects[def_id]->_hp <= 0)
@@ -874,6 +908,10 @@ int API_Range_Attack(lua_State* L)
 			NPC* npc = reinterpret_cast<NPC*>(objects[atk_id]);
 			npc->_is_batte = false;
 		}
+	} 
+	{
+		Player* player = reinterpret_cast<Player*>(objects[def_id]);
+		player->send_change_hp(def_id);
 	}
 	{
 		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);

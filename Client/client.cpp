@@ -514,11 +514,19 @@ void ProcessPacket(char* ptr)
 		if (other_id == g_myid) {
 			avatar.hp = packet->hp;
 			avatar._max_hp = packet->max_hp;
+			if (avatar.hp <= 0)
+			{
+				avatar.hide();
+			}
 		}
 		else
 		{
 			players[other_id].hp = packet->hp;
 			players[other_id]._max_hp = packet->max_hp;
+			if (players[other_id].hp <= 0)
+			{
+				players[other_id].hide();
+			}
 		}
 		break;
 	}
@@ -741,7 +749,7 @@ int main()
 					case sf::Keyboard::Down:
 						direction = 1;
 						break;
-					case  sf::Keyboard::Space:
+					case  sf::Keyboard::A:
 						attack = true;
 						break;
 					case sf::Keyboard::Escape:

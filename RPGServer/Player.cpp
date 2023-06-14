@@ -199,27 +199,53 @@ void Player::dead_player()
 	{
 		SD_PLAYER_CHANGE_STAT_PACKET packet;
 		_exp = _exp / 2;
-		_hp = _max_hp;
 		packet.size = sizeof(packet);
 		packet.type = SD_PLAYER_CHANGE_STAT;
 		packet.id = _db_id;
 		packet.level = _level;
 		packet.max_hp = _max_hp;
 		packet.exp = _exp;
-		packet.hp = _hp;
+		packet.hp = _max_hp;
 		DB_send_packet(&packet);
 	}
+	EVENT ev{ _id, EV_RESPAWN, chrono::system_clock::now() + 5s };
+	//l_q.lock();
+	timer_queue.push(ev);
 
 	{
+		std::unique_lock<std::shared_mutex> lock(_s_lock);
+		_state = ST_ALLOC;
+	}
+
+
+	_last_dead_time = chrono::system_clock::now();
+
+}
+
+void Player::respawn_player()
+{
+	{
+		_hp = _max_hp;
+		{
+			std::unique_lock<std::shared_mutex> lock(_s_lock);
+			_state = ST_INGAME;
+		}
+
 		Player* player = reinterpret_cast<Player*>(objects[_id]);
 		short x = player->_x;
 		short y = player->_y;
 		int b_my_zoneY, b_my_zoneX;
 		b_my_zoneY = player->_y / ZONE_SEC;
 		b_my_zoneX = player->_x / ZONE_SEC;
-		
-		player->_x = W_WIDTH / 2;
-		player->_y = W_HEIGHT / 2;
+
+		retry:
+		short r_x = rand() % W_WIDTH;
+		short r_y = rand() % W_HEIGHT;
+		if (World_Map.find(make_pair(r_x, r_y)) != World_Map.end())
+			goto retry;
+
+		player->_x = r_x;
+		player->_y = r_y;
 		int my_zoneY, my_zoneX;
 		my_zoneY = player->_y / ZONE_SEC;
 		my_zoneX = player->_x / ZONE_SEC;
@@ -313,7 +339,5 @@ void Player::dead_player()
 		}
 		player->_movecount++;
 		player->send_location_DB();
-		_last_dead_time = chrono::system_clock::now();
 	}
-
 }
