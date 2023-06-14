@@ -50,7 +50,8 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 	{
 	case CS_LOGIN:
 	{
-		
+		if (o_id < 0 || o_id >= MAX_USER)
+			break;
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		CS_LOGIN_PACKET* packet = reinterpret_cast<CS_LOGIN_PACKET*>(pk);
 		string str = packet->name;
@@ -89,7 +90,10 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		{
 			std::shared_lock<std::shared_mutex> loacl_lock(player->_s_lock);
 			if (player->_state != ST_INGAME)
+			{
+				loacl_lock.unlock();
 				break;
+			}
 		}
 		CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(pk);
 		if (player->_p_last_move_time < (chrono::system_clock::now() - chrono::milliseconds(100)))
@@ -223,7 +227,10 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		{
 			std::shared_lock<std::shared_mutex> loacl_lock(player->_s_lock);
 			if (player->_state != ST_INGAME)
+			{
+				loacl_lock.unlock();
 				break;
+			}
 		}
 		{
 			if(player->_last_attack_time < chrono::system_clock::now() - 1s)
@@ -300,7 +307,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		DS_PLAYER_LOGIN_PACKET* packet = reinterpret_cast<DS_PLAYER_LOGIN_PACKET*>(pk);
 
 		Player* player = reinterpret_cast<Player*>(objects[packet->s_id]);
-		cout << "LOGIN : " << packet->id << endl;
+		//cout << "LOGIN : " << packet->id << endl;
 		player->_x = packet->x;
 		player->_y = packet->y;
 		player->_max_hp = packet->max_hp;
@@ -733,7 +740,10 @@ int get_new_player_id()
 		Player* player = reinterpret_cast<Player*>(objects[i]);
 		std::shared_lock<std::shared_mutex> lock(player->_s_lock);
 		if (player->_state == ST_FREE)
+		{
+			lock.unlock();
 			return i;
+		}
 	}
 	return -1;
 }
@@ -859,7 +869,14 @@ int API_Default_Attack(lua_State* L)
 	if (objects[def_id]->_hp <= 0)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[def_id]);
-		player->dead_player();
+		{
+			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+			if (player->_state == ST_INGAME)
+			{
+				player->_state = ST_ALLOC;
+				player->dead_player();
+			}
+		}
 		if (atk_id >= MAX_USER)
 		{
 			NPC* npc = reinterpret_cast<NPC*>(objects[atk_id]);
@@ -902,7 +919,16 @@ int API_Range_Attack(lua_State* L)
 	if (objects[def_id]->_hp <= 0)
 	{
 		Player* player = reinterpret_cast<Player*>(objects[def_id]);
-		player->dead_player();
+		
+		{
+			std::unique_lock<std::shared_mutex> lock(player->_s_lock);
+			if(player->_state == ST_INGAME)
+			{
+				player->_state = ST_ALLOC;
+				player->dead_player();
+			}
+		}
+		
 		if (atk_id >= MAX_USER)
 		{
 			NPC* npc = reinterpret_cast<NPC*>(objects[atk_id]);

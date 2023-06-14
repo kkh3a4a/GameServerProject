@@ -196,6 +196,7 @@ void Player::kill_NPC(int n_id)
 
 void Player::dead_player()
 {
+	
 	{
 		SD_PLAYER_CHANGE_STAT_PACKET packet;
 		_exp = _exp / 2;
@@ -212,11 +213,8 @@ void Player::dead_player()
 	//l_q.lock();
 	timer_queue.push(ev);
 
-	{
-		std::unique_lock<std::shared_mutex> lock(_s_lock);
-		_state = ST_ALLOC;
-	}
-
+	
+	//cout << _id << " dead\n";
 
 	_last_dead_time = chrono::system_clock::now();
 
@@ -225,6 +223,7 @@ void Player::dead_player()
 void Player::respawn_player()
 {
 	{
+		//cout << _id << " respawn\n";
 		_hp = _max_hp;
 		{
 			std::unique_lock<std::shared_mutex> lock(_s_lock);

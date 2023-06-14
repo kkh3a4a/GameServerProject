@@ -3,7 +3,7 @@ constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 200;
 constexpr int BUF_SIZE = 512;
 
-constexpr int MAX_USER = 20000;
+constexpr int MAX_USER = 10000;
 constexpr int MAX_NPC = 200000;
 constexpr int MAXMOVEOBJECT = MAX_USER + MAX_NPC;
 constexpr int MAXOBJECT = MAXMOVEOBJECT;
@@ -144,6 +144,6 @@ struct SC_ATTACK_RANGE_PACKET {
 
 	int		id;
 	int		attack_time;
-	char	range[400];
+	char	range[200];
 };
 #pragma pack (pop)
