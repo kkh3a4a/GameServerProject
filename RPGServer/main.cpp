@@ -64,8 +64,14 @@ void initialize_npc()
 		zone[my_zoneY][my_zoneX]->ADD(npc->_id);
 
 		auto L = npc->_L = luaL_newstate();
+		if (L == nullptr)
+		{
+			cout << npc_id << endl;
+			return;
+		}
 		luaL_openlibs(L);
 		int ret = luaL_loadfile(L, "npc.lua");
+
 		lua_pcall(L, 0, 0, 0);
 
 		lua_getglobal(L, "set_uid");

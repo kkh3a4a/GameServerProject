@@ -194,7 +194,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 					}
 				}
 				player->_movecount++;
-				if (player->_movecount > 5)
+				if (player->_movecount > 20)
 				{
 					player->_movecount = 0;
 					player->send_location_DB();
@@ -284,6 +284,26 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		player->_hp = packet->hp;
 		player->_level = packet->level;
 		player->_exp = packet->exp;
+		while (1)
+		{
+			if (World_Map.find(make_pair(player->_x, player->_y)) == World_Map.end())
+				break;
+			
+			if (player->_x < 1100)
+			{
+				player->_x += 1;
+				continue;
+			}
+			if(player->_x > 1000)
+			{
+				player->_x += 2;
+			}
+
+			
+		}
+
+
+
 		int my_zoneY, my_zoneX;
 		my_zoneY = player->_y / ZONE_SEC;
 		my_zoneX = player->_x / ZONE_SEC;
