@@ -540,41 +540,45 @@ void NPC::do_range_attack()
 {
 	if (_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
 		return;
-	Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
-	if(pl->_state == ST_INGAME)
+	if (_last_attack_time < chrono::system_clock::now() - 1s)
 	{
-		if (abs(pl->_x - _x) > VIEW_RANGE || abs(pl->_y - _y) > VIEW_RANGE) {
-			EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
-			//l_q.lock();
-			timer_queue.push(ev);
-			_is_batte = false;
-			return;
-		}
-		if (pl->_last_dead_time > chrono::system_clock::now() - 3s || pl->_state != ST_INGAME)
+		_last_attack_time = chrono::system_clock::now();
+		Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
+		if (pl->_state == ST_INGAME)
 		{
-			EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
-			//l_q.lock();
-			timer_queue.push(ev);
-			_is_batte = false;
-			return;
+			if (abs(pl->_x - _x) > VIEW_RANGE || abs(pl->_y - _y) > VIEW_RANGE) {
+				EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
+				//l_q.lock();
+				timer_queue.push(ev);
+				_is_batte = false;
+				return;
+			}
+			if (pl->_last_dead_time > chrono::system_clock::now() - 3s || pl->_state != ST_INGAME)
+			{
+				EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
+				//l_q.lock();
+				timer_queue.push(ev);
+				_is_batte = false;
+				return;
+			}
+			if (abs(objects[_last_attacker]->_x - _x) <= 5 && abs(objects[_last_attacker]->_y - _y) <= 5)
+			{
+				int attack_time = 1000;
+				_lua_lock.lock();
+				lua_getglobal(_L, "event_NPC_Attack_msg");
+				lua_pcall(_L, 0, 0, 0);
+				_lua_lock.unlock();
+				EVENT ev{ _id, EV_RANGEATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
+				timer_queue.push(ev);
+				send_attack_range(attack_time);
+				return;
+			}
 		}
-		if (abs(objects[_last_attacker]->_x - _x) <= 5 && abs(objects[_last_attacker]->_y - _y) <= 5)
-		{
-			int attack_time = 1000;
-			_lua_lock.lock();
-			lua_getglobal(_L, "event_NPC_Attack_msg");
-			lua_pcall(_L, 0, 0, 0);
-			_lua_lock.unlock();
-			EVENT ev{ _id, EV_RANGEATTACK, chrono::system_clock::now() + chrono::milliseconds(attack_time) };
-			timer_queue.push(ev);
-			send_attack_range(attack_time);
-			return;
-		}
-	}
 
-	EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
-	timer_queue.push(ev);
-	_is_batte = false;
+		EVENT ev{ _id, EV_WAIT, chrono::system_clock::now() + 1s };
+		timer_queue.push(ev);
+		_is_batte = false;
+	}
 	return;
 }
 

@@ -117,8 +117,7 @@ void SendPacket(int cl, void* packet)
 		&over->over, NULL);
 	if (0 != ret) {
 		int err_no = WSAGetLastError();
-		if (WSA_IO_PENDING != err_no)
-			error_display("Error in SendPacket:", err_no);
+		if (WSA_IO_PENDING != err_no);
 	}
 	// std::cout << "Send Packet [" << ptype << "] To Client : " << cl << std::endl;
 }

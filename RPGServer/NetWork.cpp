@@ -825,7 +825,7 @@ int API_Defence(lua_State* L)
 		npc->_last_attacker = atk_id;
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
+	//cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	if (objects[def_id]->_hp <= 0)
 	{
 		if (def_id >= MAX_USER)
@@ -871,7 +871,7 @@ int API_Default_Attack(lua_State* L)
 	{
 		objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	}
-	cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
+	//cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	lua_pop(L, 3);
 	{
 		Player* player = reinterpret_cast<Player*>(objects[def_id]);
@@ -927,7 +927,7 @@ int API_Range_Attack(lua_State* L)
 	{
 		objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	}
-	cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
+	//cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	lua_pop(L, 4);
 
 	if (objects[def_id]->_hp <= 0)
