@@ -222,11 +222,11 @@ void worker_thread(WSA_OVER_EX g_a_over)
 						
 						if (L != nullptr)
 						{
-							pair<short, short> attack_range;
+							pair<short, short> a_range;
 
-							while (npc->attack_range.try_pop(attack_range))
+							while (npc->attack_range.try_pop(a_range))
 							{
-								if (objects[p_id]->_x == attack_range.first && objects[p_id]->_y == attack_range.second)
+								if (objects[p_id]->_x == a_range.first && objects[p_id]->_y == a_range.second)
 								{
 									lua_getglobal(L, "event_range_Attack");
 									int status = lua_pcall(L, 0, 0, 0);

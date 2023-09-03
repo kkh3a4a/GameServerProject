@@ -55,6 +55,7 @@ struct CLIENT {
 	int prev_packet_data;
 	int curr_packet_size;
 	high_resolution_clock::time_point last_move_time;
+	high_resolution_clock::time_point last_chat_time;
 };
 
 array<int, MAX_CLIENTS> client_map;
@@ -254,8 +255,8 @@ void Worker_Thread()
 			delete over;
 		}
 		else {
-			std::cout << "Unknown GQCS event!\n";
-			while (true);
+			//std::cout << "Unknown GQCS event!\n";
+			//while (true);
 		}
 	}
 }
@@ -370,6 +371,23 @@ void Test_Thread()
 			}
 			my_packet.move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
 			SendPacket(i, &my_packet);
+
+			//DB test
+			/*if(g_clients[i].last_chat_time + 1s > high_resolution_clock::now()) continue;
+			{
+				g_clients[i].last_chat_time = high_resolution_clock::now();
+
+				CS_CHAT_PACKET t_packet;
+				std::string msg;
+				msg.clear();
+				msg += 'h';
+				msg += 'i';
+				msg += '\0';
+				t_packet.size = sizeof(CS_CHAT_PACKET) - (CHAT_SIZE - msg.size());
+				strcpy_s(t_packet.mess, msg.c_str());
+				t_packet.type = CS_CHAT;
+				SendPacket(i, &t_packet);
+			}*/
 		}
 	}
 }
