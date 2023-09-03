@@ -20,7 +20,7 @@ public:
 	concurrency::concurrent_queue<pair<short, short>> move_queue;
 	lua_State* _L;
 	std::mutex _lua_lock;
-	chrono::system_clock::time_point _last_attack_time = chrono::system_clock::now();
+	volatile int _last_attack_check = 1;
 	void dead_NPC();
 	void respawn_NPC();
 	void heal_NPC();

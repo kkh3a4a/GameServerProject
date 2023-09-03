@@ -540,9 +540,8 @@ void NPC::do_range_attack()
 {
 	if (_state != ST_INGAME)	// 간혹 한번 더 이동하기 vs lock 걸기 , lock걸지말자. 
 		return;
-	if (_last_attack_time < chrono::system_clock::now() - 1s)
+	if (CAS(&_last_attack_check, 1, 0))
 	{
-		_last_attack_time = chrono::system_clock::now();
 		Player* pl = reinterpret_cast<Player*>(objects[_last_attacker]);
 		if (pl->_state == ST_INGAME)
 		{

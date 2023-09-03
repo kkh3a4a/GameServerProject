@@ -178,7 +178,7 @@ void Player::kill_NPC(int n_id)
 {
 	
   	_exp += (objects[n_id]->_level * objects[n_id]->_level * 2);
-	cout << "P" << _db_id << " kill " << n_id << " [get N" << objects[n_id]->_level * objects[n_id]->_level * 20 << " exp]\n";
+	cout << "P" << _db_id << " kill N" << n_id << " [get " << objects[n_id]->_level * objects[n_id]->_level * 20 << " exp]\n";
 	if (_exp >= _level * 100)
 	{
 		cout << "P" << _id << " : Level Up [" << _id << "]\n";

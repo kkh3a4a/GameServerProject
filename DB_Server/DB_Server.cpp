@@ -9,83 +9,10 @@
 using namespace std;
 
 
-SQLCHAR szName[DB_NAME_SIZE];
-SQLINTEGER szId, szExp;
-SQLLEN cbName = 0, cbID = 0, cbExp = 0;
+
 WSA_OVER_EX g_a_over;
 
-void DB_connect(int w_id);
 
-void DB_connect(int w_id)
-{
-
-	auto retcode = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv[w_id]);
-
-	// Set the ODBC version environment attribute  
-	if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-		retcode = SQLSetEnvAttr(henv[w_id], SQL_ATTR_ODBC_VERSION, (SQLPOINTER*)SQL_OV_ODBC3, 0);
-
-		// Allocate connection handle  
-		if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-			retcode = SQLAllocHandle(SQL_HANDLE_DBC, henv[w_id], &hdbc[w_id]);
-
-			// Set login timeout to 5 seconds  
-			if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-				retry:
-				SQLSetConnectAttr(hdbc[w_id], SQL_LOGIN_TIMEOUT, (SQLPOINTER)10, 0);
-
-				// Connect to data source  
-			   //SQLConnect(hdbc, (SQLWCHAR*)L"DB_Master", SQL_NTS, (SQLWCHAR*)NULL, 0, NULL, 0);
-				retcode = SQLConnect(hdbc[w_id], (SQLWCHAR*)L"DB_GameServerProject", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS);
-				//retcode = SQLConnect(hdbc[w_id], (SQLWCHAR*)L"2023TT", SQL_NTS, (SQLWCHAR*)NULL, 0, NULL, 0);
-				// Allocate statement handle  
-				if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-					retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc[w_id], &hstmt[w_id]);
-
-					SQLWCHAR query[100];
-					SQLINTEGER inputId = 999999; // 사용자가 입력한 ID 값
-					// 동적으로 SQL 문장 생성
-					swprintf(query, 100, L"SELECT user_id, user_name FROM user_info WHERE user_id = %d", inputId);
-					// SQL 문장 실행
-					retcode = SQLExecDirect(hstmt[w_id], query, SQL_NTS);
-					if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-						// Bind columns 1, 2
-						retcode = SQLBindCol(hstmt[w_id], 1, SQL_INTEGER, &szId, sizeof(SQLINTEGER), &cbID);
-						retcode = SQLBindCol(hstmt[w_id], 2, SQL_C_CHAR, szName, DB_NAME_SIZE, &cbName);
-
-						// Fetch and print each row of data. On an error, display a message and exit. 
-						retcode = SQLFetch(hstmt[w_id]);  // 데이터 해석
-						if (retcode == SQL_ERROR)
-							std::cout << "Fetch error" << endl;
-						if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO)
-						{
-							wcout << w_id << L" : " << reinterpret_cast<char*>(szName) << endl;
-						}
-					}
-					else
-					{
-						show_DB_error(hstmt[w_id]);
-					}
-
-					// Process data  
-					if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
-						SQLFreeHandle(SQL_HANDLE_STMT, hstmt[w_id]);
-					}
-
-				}
-				else
-				{
-					goto retry;
-				}
-
-			}
-		}
-	}
-}
-
-void player_login()
-{
-}
 
 
 int main()

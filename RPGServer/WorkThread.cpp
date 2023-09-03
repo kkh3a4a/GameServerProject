@@ -153,19 +153,25 @@ void worker_thread(WSA_OVER_EX g_a_over)
 					Player* m_player = reinterpret_cast<Player*>(objects[key]);
 					m_player->send_change_hp(objects[key]->_id);
 				}
+				{
+					std::shared_lock<std::shared_mutex> lock(objects[key]->_vl);
+					for (auto& p_id : objects[key]->_view_list) {
+						if (p_id >= MAX_USER)
+							continue;
+						Player* player = reinterpret_cast<Player*>(objects[p_id]);
+						player->send_change_hp(objects[key]->_id);
+					}
+				}
+				break;
+			}
+			{
+				std::shared_lock<std::shared_mutex> lock(objects[key]->_vl);
 				for (auto& p_id : objects[key]->_view_list) {
 					if (p_id >= MAX_USER)
 						continue;
 					Player* player = reinterpret_cast<Player*>(objects[p_id]);
 					player->send_change_hp(objects[key]->_id);
 				}
-				break;
-			}
-			for (auto& p_id : objects[key]->_view_list) {
-				if (p_id >= MAX_USER)
-					continue;
-				Player* player = reinterpret_cast<Player*>(objects[p_id]);
-				player->send_change_hp(objects[key]->_id);
 			}
 			EVENT ev{ objects[key]->_id, EV_HEAL, chrono::system_clock::now() + 5s };
 			//l_q.lock();
@@ -178,15 +184,18 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			{
 				npc->_lua_lock.lock();
 				lua_State* L = npc->_L;
-				for(auto p_id : npc->_view_list)
 				{
-					if (p_id >= MAX_USER) 
-						break;
-					if (L != nullptr)
+					std::shared_lock<std::shared_mutex> lock(npc->_vl);
+					for (auto p_id : npc->_view_list)
 					{
-						lua_getglobal(L, "event_object_Attack");
-						lua_pushnumber(L, p_id);
-						int status = lua_pcall(L, 1, 0, 0);
+						if (p_id >= MAX_USER)
+							break;
+						if (L != nullptr)
+						{
+							lua_getglobal(L, "event_object_Attack");
+							lua_pushnumber(L, p_id);
+							int status = lua_pcall(L, 1, 0, 0);
+						}
 					}
 				}
 				npc->_lua_lock.unlock();
@@ -202,28 +211,35 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
 			{
 				npc->_lua_lock.lock();
+				
 				lua_State* L = npc->_L;
-				for (auto p_id : npc->_view_list)
 				{
-					if (p_id >= MAX_USER)
-						break;
-					if (L != nullptr)
+					std::shared_lock<std::shared_mutex> lock(npc->_vl);
+					for (auto p_id : npc->_view_list)
 					{
+						if (p_id >= MAX_USER)
+							break;
 						
-						pair<short, short> attack_range;
-						while (npc->attack_range.try_pop(attack_range))
+						if (L != nullptr)
 						{
-							lua_getglobal(L, "event_range_Attack");
-							lua_pushnumber(L, p_id);
-							lua_pushnumber(L, attack_range.first);
-							lua_pushnumber(L, attack_range.second);
-							int status = lua_pcall(L, 3, 0, 0);
+							pair<short, short> attack_range;
+
+							while (npc->attack_range.try_pop(attack_range))
+							{
+								if (objects[p_id]->_x == attack_range.first && objects[p_id]->_y == attack_range.second)
+								{
+									lua_getglobal(L, "event_range_Attack");
+									int status = lua_pcall(L, 0, 0, 0);
+								}
+							}
 						}
 					}
 				}
 				npc->_lua_lock.unlock();
 			}
 			ex_over->do_npc_wait(key);
+
+			npc->_last_attack_check = 1;
 			delete ex_over;
 			break;
 		}
@@ -237,7 +253,8 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		case OP_NPC_WAIT:
 		{
 			ex_over->do_npc_wait(static_cast<int>(key));
-
+			NPC* npc = reinterpret_cast<NPC*>(objects[key]);
+			npc->_last_attack_check = 1;
 			delete ex_over;
 			break;
 		}

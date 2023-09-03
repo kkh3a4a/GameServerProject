@@ -62,14 +62,8 @@ function event_object_Attack(def_id)
 	end
 end
 
-function event_range_Attack(def_id ,attack_x, attack_y)
-   def_x = API_get_x(def_id);
-   def_y = API_get_y(def_id);
-   if (def_x == attack_x ) then
-      if (def_y == attack_y) then
-			API_Range_Attack(myid, def_id, 1000);
-		end
-	end
+function event_range_Attack()
+	API_Range_Attack(myid, def_id, 1000);
 end
 
 function event_NPC_Attack_msg()
