@@ -224,10 +224,10 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		CS_ATTACK_PACKET* packet = reinterpret_cast<CS_ATTACK_PACKET*>(pk);
 		Player* player = reinterpret_cast<Player*>(objects[o_id]);
 		{
-			std::shared_lock<std::shared_mutex> loacl_lock(player->_s_lock);
+			std::shared_lock<std::shared_mutex> local_lock(player->_s_lock);
 			if (player->_state != ST_INGAME)
 			{
-				loacl_lock.unlock();
+				local_lock.unlock();
 				break;
 			}
 		}
@@ -240,8 +240,13 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 				player->send_packet(&packet);
 
 				player->_last_attack_time = chrono::system_clock::now();
-				shared_lock<shared_mutex> lock(player->_vl);
-				for (auto& v_id : player->_view_list)
+				unordered_set <int> old_vl;
+				{
+					shared_lock<shared_mutex> lock(player->_vl);
+					old_vl = player->_view_list;
+				}
+
+				for (auto& v_id : old_vl)
 				{
 					if (v_id < MAX_USER)
 						continue;
@@ -624,6 +629,7 @@ void WSA_OVER_EX::do_npc_wait(int n_id)
 	for (auto& p_id : near_list) {
 		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 		std::shared_lock<std::shared_mutex> lock(pl->_vl);
+
 		if (npc->_n_type == 4)
 		{
 			if (is_agro(pl->_id, n_id)) {
@@ -896,8 +902,12 @@ int API_Default_Attack(lua_State* L)
 	}
 
 	{
-		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
-		for (auto& p_id : objects[def_id]->_view_list) {
+		unordered_set<int> old_vl;
+		{
+			std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
+			old_vl = objects[def_id]->_view_list;
+		}
+		for (auto& p_id : old_vl) {
 			if (p_id >= MAX_USER)
 				continue;
 			Player* player = reinterpret_cast<Player*>(objects[p_id]);
@@ -954,8 +964,13 @@ int API_Range_Attack(lua_State* L)
 		player->send_change_hp(def_id);
 	}
 	{
-		std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
-		for (auto& p_id : objects[def_id]->_view_list) {
+		unordered_set<int> old_vl;
+		{
+			std::shared_lock<std::shared_mutex> lock(objects[def_id]->_vl);
+			old_vl = objects[def_id]->_view_list;
+		}
+
+		for (auto& p_id : old_vl) {
 			if (p_id >= MAX_USER)
 				continue;
 			Player* player = reinterpret_cast<Player*>(objects[p_id]);

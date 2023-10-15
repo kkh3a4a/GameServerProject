@@ -185,8 +185,12 @@ void worker_thread(WSA_OVER_EX g_a_over)
 				npc->_lua_lock.lock();
 				lua_State* L = npc->_L;
 				{
-					std::shared_lock<std::shared_mutex> lock(npc->_vl);
-					for (auto p_id : npc->_view_list)
+					unordered_set<int> old_vl;
+					{
+						std::shared_lock<std::shared_mutex> lock(objects[key]->_vl);
+						old_vl = objects[key]->_view_list;
+					}
+					for (auto p_id : old_vl)
 					{
 						if (p_id >= MAX_USER)
 							break;
@@ -214,8 +218,12 @@ void worker_thread(WSA_OVER_EX g_a_over)
 				
 				lua_State* L = npc->_L;
 				{
-					std::shared_lock<std::shared_mutex> lock(npc->_vl);
-					for (auto p_id : npc->_view_list)
+					unordered_set<int> old_vl;
+					{
+						std::shared_lock<std::shared_mutex> lock(objects[key]->_vl);
+						old_vl = objects[key]->_view_list;
+					}
+					for (auto p_id : old_vl)
 					{
 						if (p_id >= MAX_USER)
 							break;

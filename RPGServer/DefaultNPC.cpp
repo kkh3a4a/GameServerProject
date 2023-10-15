@@ -38,6 +38,7 @@ void NPC::dead_NPC()
 		if (can_see(pl->_id, _id))
 			near_list.insert(pl->_id);
 	}
+
 	for (auto& p_id : near_list) {
 		Player* pl = reinterpret_cast<Player*>(objects[p_id]);
 		std::shared_lock<std::shared_mutex> lock(pl->_vl);
