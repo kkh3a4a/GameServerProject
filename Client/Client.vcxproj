@@ -144,10 +144,10 @@
     <ClCompile Include="client.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ClInclude Include="..\protocol.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\protocol.h" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

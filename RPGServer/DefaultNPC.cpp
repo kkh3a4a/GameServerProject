@@ -523,15 +523,10 @@ void NPC::send_attack_range(int attack_time)
 		attack_range.clear();
 		sprintf_s(buffer, "%d %d\n", objects[_last_attacker]->_x, objects[_last_attacker]->_y);
 		s += buffer;
-		for (int i = 0; i < 3; ++i)
-		{
-			ranX[i] = rand() % 3;
-			ranY[i] = rand() % 3;
-			attack_range.push(make_pair(objects[_last_attacker]->_x - 2 + ranX[i], objects[_last_attacker]->_y - 1 + ranY[i]));
-			sprintf_s(buffer, "%d %d\n", objects[_last_attacker]->_x - 2 + ranX[i], objects[_last_attacker]->_y - 1 + ranY[i]);
-			s += buffer;
-		}
-		cout << s << endl;
+		
+		attack_range.push(make_pair(objects[_last_attacker]->_x, objects[_last_attacker]->_y));
+		sprintf_s(buffer, "%d %d\n", objects[_last_attacker]->_x, objects[_last_attacker]->_y);
+		s += buffer;
 	}
 	strcpy_s(packet.range, sizeof(char) * (s.size() + 1), s.c_str());
 	packet.size = sizeof(SC_ATTACK_RANGE_PACKET) - (200 - s.size() - 1);

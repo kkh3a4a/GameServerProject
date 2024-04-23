@@ -333,8 +333,8 @@ void DB_connect(int w_id)
 				SQLSetConnectAttr(hdbc[w_id], SQL_LOGIN_TIMEOUT, (SQLPOINTER)10, 0);
 
 				// Connect to data source  
-			   //SQLConnect(hdbc, (SQLWCHAR*)L"DB_Master", SQL_NTS, (SQLWCHAR*)NULL, 0, NULL, 0);
-				retcode = SQLConnect(hdbc[w_id], (SQLWCHAR*)L"DB_GameServerProject", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS);
+			    //retcode = SQLConnect(hdbc, (SQLWCHAR*)L"SQL_TESTER", SQL_NTS, (SQLWCHAR*)NULL, 0, NULL, 0);
+				retcode = SQLConnect(hdbc[w_id], (SQLWCHAR*)L"DB_Server", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS, (SQLWCHAR*)L"2019180046", SQL_NTS);
 				//retcode = SQLConnect(hdbc[w_id], (SQLWCHAR*)L"2023TT", SQL_NTS, (SQLWCHAR*)NULL, 0, NULL, 0);
 				// Allocate statement handle  
 				if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {

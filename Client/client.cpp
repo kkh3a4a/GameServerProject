@@ -216,9 +216,10 @@ public:
 				}
 				else
 				{
-					attack_range.erase(make_pair(p.first.first, p.first.second));
+					//attack_range.erase(make_pair(p.first.first, p.first.second));
 				}
 			}
+			//attack_range.erase(make_pair(p.first.first, p.first.second));
 		}
 		
 	}

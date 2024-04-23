@@ -178,10 +178,10 @@ void Player::kill_NPC(int n_id)
 {
 	
   	_exp += (objects[n_id]->_level * objects[n_id]->_level * 2);
-	cout << "P" << _db_id << " kill N" << n_id << " [get " << objects[n_id]->_level * objects[n_id]->_level * 20 << " exp]\n";
+	////cout << "P" << _db_id << " kill N" << n_id << " [get " << objects[n_id]->_level * objects[n_id]->_level * 20 << " exp]\n";
 	if (_exp >= _level * 100)
 	{
-		cout << "P" << _id << " : Level Up [" << _id << "]\n";
+		////cout << "P" << _id << " : Level Up [" << _id << "]\n";
 		_exp -= _level * 100;
 		_max_hp = (int)((float)_max_hp * (1.1));
 		_hp = _max_hp;
@@ -222,7 +222,7 @@ void Player::dead_player()
 	timer_queue.push(ev);
 
 	
-	//cout << _id << " dead\n";
+	////cout << _id << " dead\n";
 
 	_last_dead_time = chrono::system_clock::now();
 
@@ -231,7 +231,7 @@ void Player::dead_player()
 void Player::respawn_player()
 {
 	{
-		//cout << _id << " respawn\n";
+		////cout << _id << " respawn\n";
 		_hp = _max_hp;
 		{
 			std::unique_lock<std::shared_mutex> lock(_s_lock);

@@ -17,7 +17,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		if (FALSE == ret) {
 			if (ex_over->_iocpop == OP_ACCEPT) cout << "Accept Error";
 			else {
-				cout << "GQCS Error on client[" << key << "]\n";
+				//cout << "GQCS Error on client[" << key << "]\n";
 				if(key != 1234567)
 					ex_over->disconnect(static_cast<int>(key));
 				if (ex_over->_iocpop == OP_SEND) delete ex_over;
@@ -55,7 +55,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			}
 			else
 			{
-				cout << " Accept Error : MAXPLAYER connect" << endl;
+				//cout << " Accept Error : MAXPLAYER connect" << endl;
 			}
 			ZeroMemory(&g_a_over._wsaover, sizeof(g_a_over._wsaover));
 			int addr_size = sizeof(SOCKADDR_IN);
@@ -107,7 +107,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 				NPC* npc = reinterpret_cast<NPC*>(objects[key]);
 				{
 					npc->_n_wake = false;
-					//cout << "respawn " << npc->_id << endl;
+					////cout << "respawn " << npc->_id << endl;
 					npc->_hp = npc->_max_hp;
 					std::unique_lock<std::shared_mutex> lock(npc->_s_lock);
 					npc->_state = ST_INGAME;

@@ -25,7 +25,7 @@ void initObject()
 	{
 		objects[i] = new NPC;
 	}
-	cout << "init Object" << endl;
+	//cout << "init Object" << endl;
 }
 
 void initZone()
@@ -75,7 +75,7 @@ void initialize_npc()
 		auto L = npc->_L = luaL_newstate();
 		if (L == nullptr)
 		{
-			cout << npc_id << endl;
+			////cout << npc_id << endl;
 			return;
 		}
 		luaL_openlibs(L);

@@ -78,6 +78,8 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 			s_packet.type = SC_LOGIN_FAIL;
 			player->send_packet(&s_packet);
 			login_fail_disconnect(o_id);
+			
+
 		}
 
 		break;
@@ -311,7 +313,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 		DS_PLAYER_LOGIN_PACKET* packet = reinterpret_cast<DS_PLAYER_LOGIN_PACKET*>(pk);
 
 		Player* player = reinterpret_cast<Player*>(objects[packet->s_id]);
-		//cout << "LOGIN : " << packet->id << endl;
+		////cout << "LOGIN : " << packet->id << endl;
 		player->_x = packet->x;
 		player->_y = packet->y;
 		player->_max_hp = packet->max_hp;
@@ -831,7 +833,7 @@ int API_Defence(lua_State* L)
 		npc->_last_attacker = atk_id;
 	}
 	objects[def_id]->_hp -= objects[atk_id]->_dmg;
-	//cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
+	////cout << "P" << reinterpret_cast<Player*>(objects[atk_id])->_db_id << " Attack " << "N" << def_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	if (objects[def_id]->_hp <= 0)
 	{
 		if (def_id >= MAX_USER)
@@ -877,7 +879,7 @@ int API_Default_Attack(lua_State* L)
 	{
 		objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	}
-	//cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
+	////cout << "N" << atk_id << " is Attack "<< reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	lua_pop(L, 3);
 	{
 		Player* player = reinterpret_cast<Player*>(objects[def_id]);
@@ -937,7 +939,7 @@ int API_Range_Attack(lua_State* L)
 	{
 		objects[def_id]->_hp -= objects[atk_id]->_dmg;
 	}
-	//cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
+	////cout << "N" << atk_id << " is Attack " << reinterpret_cast<Player*>(objects[def_id])->_db_id << "[ " << objects[atk_id]->_dmg << " damage ]\n";
 	lua_pop(L, 4);
 
 	if (objects[def_id]->_hp <= 0)
