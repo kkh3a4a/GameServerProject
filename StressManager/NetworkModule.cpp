@@ -373,7 +373,7 @@ void Test_Thread()
 			SendPacket(i, &my_packet);
 
 			//DB test
-			/*if(g_clients[i].last_chat_time + 1s > high_resolution_clock::now()) continue;
+			/*if(g_clients[i].last_chat_time + 0.1s > high_resolution_clock::now()) continue;
 			{
 				g_clients[i].last_chat_time = high_resolution_clock::now();
 

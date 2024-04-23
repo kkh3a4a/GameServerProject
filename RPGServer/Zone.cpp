@@ -8,6 +8,8 @@ ZoneManager::ZoneManager()
 	tail->SetNext(nullptr);
 	head->SetID(0x80000000);
 	tail->SetID(0x7FFFFFFF);
+	std::thread cleanupThread(&ZoneManager::backgroundCleanup, this);
+	cleanupThread.detach();
 }
 
 void ZoneManager::ADD(int id)
@@ -48,7 +50,6 @@ void ZoneManager::ADD(int id)
 void ZoneManager::REMOVE(int id)
 {
 	while (1) {
-		//std::shared_lock<std::shared_mutex> rlock(r_lock);
 		Zone* prev = head;
 		Zone* curr = prev->GetNext();
 		while (curr->GetObjID() < id) {
@@ -60,7 +61,6 @@ void ZoneManager::REMOVE(int id)
 		if (validate(prev, curr))
 		{
 			if (curr->GetObjID() != id) {
-				//r_lock.unlock();
 				curr->unlock();
 				prev->unlock();
 				return;
@@ -68,15 +68,12 @@ void ZoneManager::REMOVE(int id)
 			else {
 				curr->removed = true;
 				prev->SetNext(curr->GetNext());
-				//r_lock.unlock();
 				curr->unlock();
 				prev->unlock();
-				//delete curr;					//추후 지워주도록 하자
-				//removeObj(curr);
+				removeObj(curr);
 				return;
 			}
 		}
-		//r_lock.unlock();
 		curr->unlock();
 		prev->unlock();
 	}
@@ -93,13 +90,27 @@ void ZoneManager::Zonelist(set<int>& a)
 	}
 	
 }
-
 void ZoneManager::removeObj(Zone* obj)
 {
-	std::unique_lock<std::shared_mutex> rlock(r_lock);
-	delete obj;
-	r_lock.unlock();
+	std::lock_guard<std::mutex> lock(deletionMutex);
+	deletedObjects.push_back(obj);
 }
+
+void ZoneManager::backgroundCleanup()
+{
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::seconds(600));
+		{
+			std::lock_guard<std::mutex> lock(deletionMutex);
+			for (auto obj : deletedObjects) {
+				delete obj;
+			}
+			deletedObjects.clear();
+		}
+	}
+}
+
+
 
 bool ZoneManager::validate(Zone* prev, Zone* curr)
 {

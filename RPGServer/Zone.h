@@ -55,10 +55,14 @@ public:
 	Zone* tail;
 	shared_mutex r_lock;
 	ZoneManager();
+	
+	vector<Zone*> deletedObjects;
+	mutex deletionMutex;
 
 	void ADD(int);
 	void REMOVE(int);
 	bool validate(Zone* prev, Zone* curr);
 	void removeObj(Zone* zone);
 	void Zonelist(set<int>& a);
+	void backgroundCleanup();
 };
