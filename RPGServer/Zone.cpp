@@ -28,8 +28,6 @@ void ZoneManager::ADD(int id)
 				Zone* node = new Zone{ id };
 				node->SetNext(curr);
 				prev->SetNext(node);
-
-				//r_lock.unlock();
 				curr->unlock();
 				prev->unlock();
 				
@@ -37,13 +35,11 @@ void ZoneManager::ADD(int id)
 			}
 			else
 			{
-				//r_lock.unlock();
 				curr->unlock();
 				prev->unlock();
 				return;
 			}
 		}
-		//r_lock.unlock();
 		curr->unlock();
 		prev->unlock();
 	}

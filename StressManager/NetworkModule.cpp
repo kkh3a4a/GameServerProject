@@ -19,7 +19,7 @@ using namespace chrono;
 
 extern HWND		hWnd;
 
-const static int MAX_TEST = 5000;
+const static int MAX_TEST = 10000;
 const static int MAX_CLIENTS = MAX_TEST * 2;
 const static int INVALID_ID = -1;
 const static int MAX_PACKET_SIZE = 512;
@@ -193,7 +193,7 @@ void Worker_Thread()
 			int err_no = WSAGetLastError();
 			if (64 == err_no) DisconnectClient(client_id);
 			else {
-				// error_display("GQCS : ", WSAGetLastError());
+				error_display("GQCS : ", WSAGetLastError());
 				DisconnectClient(client_id);
 			}
 			if (OP_SEND == over->event_type) delete over;
@@ -238,14 +238,14 @@ void Worker_Thread()
 				int err_no = WSAGetLastError();
 				if (err_no != WSA_IO_PENDING)
 				{
-					//error_display("RECV ERROR", err_no);
+					error_display("RECV ERROR", err_no);
 					DisconnectClient(client_id);
 				}
 			}
 		}
 		else if (OP_SEND == over->event_type) {
 			if (io_size != over->wsabuf.len) {
-				// std::cout << "Send Incomplete Error!\n";
+				std::cout << "Send Incomplete Error!\n";
 				DisconnectClient(client_id);
 			}
 			delete over;
@@ -255,8 +255,8 @@ void Worker_Thread()
 			delete over;
 		}
 		else {
-			//std::cout << "Unknown GQCS event!\n";
-			//while (true);
+			std::cout << "Unknown GQCS event!\n";
+			while (true);
 		}
 	}
 }
@@ -312,7 +312,7 @@ void Adjust_Number_Of_Client()
 	if (0 != Result) {
 		cout << "Error connect" << endl;
 		return;
-		//error_display("WSAConnect : ", GetLastError());
+		error_display("WSAConnect : ", GetLastError());
 	}
 
 	g_clients[num_connections].curr_packet_size = 0;

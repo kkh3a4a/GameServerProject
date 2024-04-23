@@ -22,9 +22,9 @@ void TimerThread()
 			continue;	
 		}
 		retry_timer:
-		if (_event._exec_time > chrono::system_clock::now())	//이미 꺼냈는데 다시넣는건 오버헤드 큰거같음
+		if (_event._exec_time > chrono::system_clock::now())
 		{
-			if ((_event._exec_time - chrono::system_clock::now()).count() > 100)	//0.01초보다 크면 다시 넣자....
+			if ((_event._exec_time - chrono::system_clock::now()).count() > 100)
 			{
    				timer_queue.push(_event);
 				goto retry_pop;

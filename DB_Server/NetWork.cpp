@@ -163,7 +163,7 @@ void player_login(int s_id, int id, char name[20], int key, int w_id)
 	//id 없으면 추가 해줌
 	if (rowCount <= 0)
 	{
-		cout << id << " 생성" << endl;
+		//cout << id << " 생성" << endl;
 		retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc[w_id], &hstmt[w_id]);
 		if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO) {
 			show_DB_error(w_id);
@@ -224,7 +224,7 @@ void player_login(int s_id, int id, char name[20], int key, int w_id)
 			s_p.type = DS_PLAYER_LOGIN;
 			s_p.size = sizeof(DS_PLAYER_LOGIN_PACKET);
 
-			cout << "login : " << s_p.id << endl;
+			//cout << "login : " << s_p.id << endl;
 			send_packet(&s_p, key);
 		}
 		else if (retcode == SQL_NO_DATA)

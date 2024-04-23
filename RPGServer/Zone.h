@@ -1,6 +1,8 @@
 #pragma once
 #include"NetWork.h"
 
+
+
 class Zone {
 
 	int _id;
