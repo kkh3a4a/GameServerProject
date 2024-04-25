@@ -5,7 +5,6 @@ mutex ml;
 
 void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 {
-	cout << std::this_thread::get_id() << " : " << w_id << endl;
 	while (true) 
 	{
 		DWORD num_bytes;
@@ -56,10 +55,6 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 			short* p = reinterpret_cast<short*>(buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
-				if (packet_size > 500)
-				{
-					DebugBreak();
-				}
 				if (packet_size <= remain_data) {
 					ex_over->processpacket(static_cast<int>(key), p, w_id);
 					char* m_buf = buf + packet_size;
@@ -84,6 +79,4 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 		}
 		}
 	}
-
-	cout << std::this_thread::get_id() << " : " << w_id << endl;
 }

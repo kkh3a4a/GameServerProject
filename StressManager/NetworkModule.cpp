@@ -193,7 +193,7 @@ void Worker_Thread()
 			int err_no = WSAGetLastError();
 			if (64 == err_no) DisconnectClient(client_id);
 			else {
-				error_display("GQCS : ", WSAGetLastError());
+				//error_display("GQCS : ", WSAGetLastError());
 				DisconnectClient(client_id);
 			}
 			if (OP_SEND == over->event_type) delete over;
@@ -238,7 +238,7 @@ void Worker_Thread()
 				int err_no = WSAGetLastError();
 				if (err_no != WSA_IO_PENDING)
 				{
-					error_display("RECV ERROR", err_no);
+					//error_display("RECV ERROR", err_no);
 					DisconnectClient(client_id);
 				}
 			}
@@ -255,15 +255,15 @@ void Worker_Thread()
 			delete over;
 		}
 		else {
-			std::cout << "Unknown GQCS event!\n";
-			while (true);
+			//std::cout << "Unknown GQCS event!\n";
+			//while (true);
 		}
 	}
 }
 
 constexpr int DELAY_LIMIT = 100;
 constexpr int DELAY_LIMIT2 = 150;
-constexpr int ACCEPT_DELY = 50;
+constexpr int ACCEPT_DELY = 10;
 
 void Adjust_Number_Of_Client()
 {
@@ -341,7 +341,7 @@ void Adjust_Number_Of_Client()
 		int err_no = WSAGetLastError();
 		if (err_no != WSA_IO_PENDING)
 		{
-			error_display("RECV ERROR", err_no);
+			//error_display("RECV ERROR", err_no);
 			goto fail_to_connect;
 		}
 	}
@@ -373,7 +373,7 @@ void Test_Thread()
 			SendPacket(i, &my_packet);
 
 			//DB test
-			/*if(g_clients[i].last_chat_time + 0.1s > high_resolution_clock::now()) continue;
+			if(g_clients[i].last_chat_time + 0.5s > high_resolution_clock::now()) continue;
 			{
 				g_clients[i].last_chat_time = high_resolution_clock::now();
 
@@ -387,7 +387,7 @@ void Test_Thread()
 				strcpy_s(t_packet.mess, msg.c_str());
 				t_packet.type = CS_CHAT;
 				SendPacket(i, &t_packet);
-			}*/
+			}
 		}
 	}
 }

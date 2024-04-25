@@ -5,7 +5,7 @@ constexpr int BUF_SIZE = 512;
 
 constexpr int MAX_USER = 20000;
 
-constexpr int MAX_NPC = 100000;
+constexpr int MAX_NPC = 200000;
 constexpr int MAXMOVEOBJECT = MAX_USER + MAX_NPC;
 constexpr int MAXOBJECT = MAXMOVEOBJECT;
 constexpr int W_WIDTH = 2000;
