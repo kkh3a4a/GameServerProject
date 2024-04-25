@@ -68,9 +68,9 @@ void ZoneManager::REMOVE(int id)
 			else {
 				curr->removed = true;
 				prev->SetNext(curr->GetNext());
+				removeObj(curr);
 				curr->unlock();
 				prev->unlock();
-				removeObj(curr);
 				return;
 			}
 		}

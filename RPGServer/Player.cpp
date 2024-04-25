@@ -89,6 +89,7 @@ void Player::send_move_packet(int o_id)
 			p.x = objects[o_id]->_x;
 			p.y = objects[o_id]->_y;
 			p.move_time = objects[o_id]->_last_move_time;
+
 			if (_state != ST_INGAME) return;
 			send_packet(&p);
 		}

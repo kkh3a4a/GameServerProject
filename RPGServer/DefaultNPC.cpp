@@ -489,7 +489,7 @@ void NPC::move_NPC()
 		}
 	}
 	
-
+	
 	EVENT ev{ _id, EV_MOVE,chrono::system_clock::now() + 1s };
 	//l_q.lock();
 	timer_queue.push(ev);

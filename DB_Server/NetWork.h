@@ -22,7 +22,7 @@ extern SQLHDBC hdbc[DB_THREAD_NUM];
 extern SQLHSTMT hstmt[DB_THREAD_NUM];
 extern map<int, SOCKET> G_server;
 extern int num_threads;
-extern int _prev_size;
+extern int _prev_size[8];
 extern SQLCHAR szName[DB_NAME_SIZE];
 extern SQLINTEGER szId, szExp;
 extern SQLLEN cbName, cbID, cbExp;

@@ -5,6 +5,7 @@ mutex ml;
 
 void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 {
+	cout << std::this_thread::get_id() << " : " << w_id << endl;
 	while (true) 
 	{
 		DWORD num_bytes;
@@ -32,6 +33,7 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 		switch (ex_over->_iocpop) {
 		case OP_ACCEPT: {
 			static int key = 0;
+			_prev_size[key] = 0;
 			G_server[key] = G_socket;
 			CreateIoCompletionPort(reinterpret_cast<HANDLE>(G_socket), h_iocp, key, 0);
 			do_recv(key);
@@ -40,27 +42,35 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 			int addr_size = sizeof(SOCKADDR_IN);
 			AcceptEx(DB_socket, G_socket, g_a_over._buf, 0, addr_size + 16, addr_size + 16, 0, &g_a_over._wsaover);
 			cout << "Server[" << key << "]" << " connect!" << endl;
+			
 			key++;
+
 			
 			break;
 		}
 
 		case OP_RECV: {
-			int remain_data = num_bytes + _prev_size;
-			char* buf = ex_over->_buf;
-			short* p = reinterpret_cast<short*>(ex_over->_buf);
+			int remain_data = num_bytes + _prev_size[key];
+			char buf[DB_BUF_SIZE * 2];
+			memcpy(buf, ex_over->_buf - _prev_size[key], _prev_size[key] + num_bytes);
+			short* p = reinterpret_cast<short*>(buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
+				if (packet_size > 500)
+				{
+					DebugBreak();
+				}
 				if (packet_size <= remain_data) {
 					ex_over->processpacket(static_cast<int>(key), p, w_id);
-					buf = buf + packet_size;
-					p = reinterpret_cast<short*>(buf);
+					char* m_buf = buf + packet_size;
 					remain_data = remain_data - packet_size;
+					memcpy(buf, m_buf, remain_data);
+					p = reinterpret_cast<short*>(buf);
 				}
 				else break;
 			}
 
-			_prev_size = remain_data;
+			_prev_size[key] = remain_data;
 			if (remain_data > 0) {
 				memcpy(ex_over->_buf, p, remain_data);
 			}
@@ -74,4 +84,6 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 		}
 		}
 	}
+
+	cout << std::this_thread::get_id() << " : " << w_id << endl;
 }

@@ -9,7 +9,7 @@ SQLHENV henv[DB_THREAD_NUM];
 SQLHDBC hdbc[DB_THREAD_NUM];
 SQLHSTMT hstmt[DB_THREAD_NUM];
 WSA_OVER_EX _wsa_recv_over;
-int _prev_size{};
+int _prev_size[8];
 map<int, SOCKET> G_server;
 int num_threads;
 
@@ -97,8 +97,8 @@ void do_recv(int key)
 {
 	DWORD recv_flag = 0;
 	memset(&_wsa_recv_over._wsaover, 0, sizeof(_wsa_recv_over._wsaover));
-	_wsa_recv_over._wsabuf.len = DB_BUF_SIZE - _prev_size;
-	_wsa_recv_over._wsabuf.buf = _wsa_recv_over._buf + _prev_size;
+	_wsa_recv_over._wsabuf.len = DB_BUF_SIZE - _prev_size[key];
+	_wsa_recv_over._wsabuf.buf = _wsa_recv_over._buf + _prev_size[key];
 	_wsa_recv_over._iocpop = OP_RECV;
 	int ret = WSARecv(G_server[key], &_wsa_recv_over._wsabuf, 1, 0, &recv_flag, &_wsa_recv_over._wsaover, 0);
 	

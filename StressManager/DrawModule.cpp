@@ -171,31 +171,31 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 	{
 		if (!wglMakeCurrent(NULL, NULL))					// Are We Able To Release The DC And RC Contexts?
 		{
-			MessageBox(NULL, L"Release Of DC And RC Failed.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
+			//MessageBox(NULL, L"Release Of DC And RC Failed.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
 		}
 
 		if (!wglDeleteContext(hRC))						// Are We Able To Delete The RC?
 		{
-			MessageBox(NULL, L"Release Rendering Context Failed.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
+			//MessageBox(NULL, L"Release Rendering Context Failed.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
 		}
 		hRC = NULL;										// Set RC To NULL
 	}
 
 	if (hDC && !ReleaseDC(hWnd, hDC))					// Are We Able To Release The DC
 	{
-		MessageBox(NULL, L"Release Device Context Failed.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
+		//MessageBox(NULL, L"Release Device Context Failed.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
 		hDC = NULL;										// Set DC To NULL
 	}
 
 	if (hWnd && !DestroyWindow(hWnd))					// Are We Able To Destroy The Window?
 	{
-		MessageBox(NULL, L"Could Not Release hWnd.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
+		//MessageBox(NULL, L"Could Not Release hWnd.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
 		hWnd = NULL;										// Set hWnd To NULL
 	}
 
 	if (!UnregisterClass(L"OpenGL", hInstance))			// Are We Able To Unregister Class
 	{
-		MessageBox(NULL, L"Could Not Unregister Class.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
+		//MessageBox(NULL, L"Could Not Unregister Class.", L"SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
 		hInstance = NULL;									// Set hInstance To NULL
 	}
 
@@ -237,7 +237,7 @@ BOOL CreateGLWindow(const wchar_t* title, int width, int height, BYTE bits, bool
 
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
 	{
-		MessageBox(NULL, L"Failed To Register The Window Class.", L"ERROR", MB_OK | MB_ICONEXCLAMATION);
+		//MessageBox(NULL, L"Failed To Register The Window Class.", L"ERROR", MB_OK | MB_ICONEXCLAMATION);
 		return FALSE;											// Return FALSE
 	}
 

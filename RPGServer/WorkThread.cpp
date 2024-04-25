@@ -63,18 +63,19 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			break;
 		}
 		case OP_RECV: {
-			
 			Player* player = reinterpret_cast<Player*>(objects[key]);
 			int remain_data = num_bytes + player->_prev_size;
-			char* buf = ex_over->_buf;
-			short* p = reinterpret_cast<short*>(ex_over->_buf);
+			char buf[DB_BUF_SIZE * 2];
+			memcpy(buf, ex_over->_buf - player->_prev_size, player->_prev_size + num_bytes);
+			short* p = reinterpret_cast<short*>(buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];
 				if (packet_size <= remain_data) {
 					ex_over->processpacket(static_cast<int>(key), p);
-					buf = buf + packet_size;
-					p = reinterpret_cast<short*>(buf);
+					char* m_buf = buf + packet_size;
 					remain_data = remain_data - packet_size;
+					memcpy(buf, m_buf, remain_data);
+					p = reinterpret_cast<short*>(buf);
 				}
 				else break;
 			}
@@ -268,13 +269,16 @@ void worker_thread(WSA_OVER_EX g_a_over)
 		}
 		case DB_RECV:
 		{
+			
 			int remain_data = num_bytes + DB_prev_size;
 			short* p = reinterpret_cast<short*>(ex_over->_buf);
+			char* buf = ex_over->_buf - DB_prev_size;
 			while (remain_data > 0) {
 				int packet_size = p[0];
 				if (packet_size <= remain_data) {
 					ex_over->processpacket(static_cast<int>(key), p);
-					p = p + packet_size;
+					buf = buf + packet_size;
+					p = reinterpret_cast<short*>(buf);
 					remain_data = remain_data - packet_size;
 				}
 				else break;
