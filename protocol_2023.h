@@ -15,12 +15,13 @@ constexpr int ZONE_X = (W_WIDTH / ZONE_SEC);
 constexpr int ZONE_Y = (W_HEIGHT / ZONE_SEC);
 
 // Packet ID
-constexpr char CS_LOGIN = 0;
-constexpr char CS_MOVE = 1;
-constexpr char CS_CHAT = 2;
-constexpr char CS_ATTACK = 3;			// 4 방향 공격
-constexpr char CS_TELEPORT = 4;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현
-constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
+constexpr char ERROR_PACKET = 0;
+constexpr char CS_LOGIN = 1;
+constexpr char CS_MOVE = 2;
+constexpr char CS_CHAT = 3;
+constexpr char CS_ATTACK = 4;			// 4 방향 공격
+constexpr char CS_TELEPORT = 5;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현
+constexpr char CS_LOGOUT = 6;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
 
 constexpr char SC_LOGIN_INFO = 2;
 constexpr char SC_ADD_OBJECT = 3;

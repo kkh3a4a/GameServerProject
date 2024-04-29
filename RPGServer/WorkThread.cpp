@@ -66,7 +66,7 @@ void worker_thread(WSA_OVER_EX g_a_over)
 			Player* player = reinterpret_cast<Player*>(objects[key]);
 			int remain_data = num_bytes + player->_prev_size;
 			char buf[DB_BUF_SIZE * 2];
-			memcpy(buf, ex_over->_buf - player->_prev_size, player->_prev_size + num_bytes);
+			memcpy(buf, ex_over->_buf, remain_data);
 			short* p = reinterpret_cast<short*>(buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];

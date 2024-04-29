@@ -48,6 +48,11 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 
 	switch (packet_type)
 	{
+	case ERROR_PACKET:
+	{
+		cout << "error packet " << endl;
+		break;
+	}
 	case CS_LOGIN:
 	{
 		if (o_id < 0 || o_id >= MAX_USER)

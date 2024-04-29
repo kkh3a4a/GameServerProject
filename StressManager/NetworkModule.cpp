@@ -172,6 +172,7 @@ void ProcessPacket(int ci, unsigned char packet[])
 	case SC_CHAT: break;
 	case SC_ATTACK_RANGE: break;
 	default: 
+		cout << "error" << endl;
 		break;
 		MessageBox(hWnd, L"Unknown Packet Type", L"ERROR", 0);
 		while (true);
@@ -263,7 +264,7 @@ void Worker_Thread()
 
 constexpr int DELAY_LIMIT = 100;
 constexpr int DELAY_LIMIT2 = 150;
-constexpr int ACCEPT_DELY = 10;
+constexpr int ACCEPT_DELY = 50;
 
 void Adjust_Number_Of_Client()
 {
@@ -373,7 +374,7 @@ void Test_Thread()
 			SendPacket(i, &my_packet);
 
 			//DB test
-			if(g_clients[i].last_chat_time + 0.5s > high_resolution_clock::now()) continue;
+			/*if(g_clients[i].last_chat_time + 0.5s > high_resolution_clock::now()) continue;
 			{
 				g_clients[i].last_chat_time = high_resolution_clock::now();
 
@@ -387,7 +388,7 @@ void Test_Thread()
 				strcpy_s(t_packet.mess, msg.c_str());
 				t_packet.type = CS_CHAT;
 				SendPacket(i, &t_packet);
-			}
+			}*/
 		}
 	}
 }

@@ -51,7 +51,7 @@ void worker_thread(WSA_OVER_EX g_a_over, int w_id)
 		case OP_RECV: {
 			int remain_data = num_bytes + _prev_size[key];
 			char buf[DB_BUF_SIZE * 2];
-			memcpy(buf, ex_over->_buf - _prev_size[key], _prev_size[key] + num_bytes);
+			memcpy(buf, ex_over->_buf, remain_data);
 			short* p = reinterpret_cast<short*>(buf);
 			while (remain_data > 0) {
 				int packet_size = p[0];

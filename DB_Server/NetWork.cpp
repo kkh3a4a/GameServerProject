@@ -76,7 +76,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk, int w_id)
 	}
 	default:
 	{
-		//cout << "肋给等 packet" << endl;
+		cout << "肋给等 packet" << endl;
 		break;
 	}
 	}
