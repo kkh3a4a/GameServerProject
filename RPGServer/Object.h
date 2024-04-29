@@ -11,7 +11,7 @@ public:
 	int		_x, _y, _z;		//location
 	int		_id;	
 	int		_dmg;
-	int		_last_move_time;	
+	unsigned long long		_last_move_time;
 	char	_name[20]{};
 	int		_hp;
 	int		_max_hp;

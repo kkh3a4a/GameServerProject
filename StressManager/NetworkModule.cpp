@@ -20,28 +20,31 @@ using namespace chrono;
 extern HWND		hWnd;
 
 const static int MAX_TEST = 10000;
-const static int MAX_CLIENTS = MAX_TEST * 2;
+
+//const static int MAX_CLIENTS = 1;
+const static int MAX_CLIENTS = MAX_TEST*2;
 const static int INVALID_ID = -1;
 const static int MAX_PACKET_SIZE = 512;
 const static int MAX_BUFF_SIZE = 512;
 
 #pragma comment (lib, "ws2_32.lib")
 
-#include "..\protocol_2023.h"
+#include "../protocol_2023.h"
 
 HANDLE g_hiocp;
 
-enum OPTYPE { OP_SEND, OP_RECV, OP_DO_MOVE };
+enum IOCPOP { OP_SEND, OP_RECV, OP_DO_MOVE };
 
 high_resolution_clock::time_point last_connect_time;
 
-struct OverlappedEx {
-	WSAOVERLAPPED over;
-	WSABUF wsabuf;
-	unsigned char IOCP_buf[MAX_BUFF_SIZE];
-	OPTYPE event_type;
-	int event_target;
+struct WSA_OVER_EX {
+	WSAOVERLAPPED _wsaover;
+	IOCPOP _iocpop;
+	WSABUF _wsabuf;	
+	int _e_type;
+	char _buf[MAX_BUFF_SIZE];
 };
+
 
 struct CLIENT {
 	int id;
@@ -50,12 +53,9 @@ struct CLIENT {
 	atomic_bool connected;
 
 	SOCKET client_socket;
-	OverlappedEx recv_over;
-	unsigned char packet_buf[MAX_PACKET_SIZE];
-	int prev_packet_data;
-	int curr_packet_size;
+	WSA_OVER_EX _wsaover;
+	int _prev_size;
 	high_resolution_clock::time_point last_move_time;
-	high_resolution_clock::time_point last_chat_time;
 };
 
 array<int, MAX_CLIENTS> client_map;
@@ -77,7 +77,7 @@ struct ALIEN {
 	int x, y;
 	int visible_count;
 };
-
+void do_recv(int c_id);
 void error_display(const char* msg, int err_no)
 {
 	WCHAR* lpMsgBuf;
@@ -89,7 +89,8 @@ void error_display(const char* msg, int err_no)
 		(LPTSTR)&lpMsgBuf, 0, NULL);
 	std::cout << msg;
 	std::wcout << L"에러" << lpMsgBuf << std::endl;
-	//MessageBox(hWnd, lpMsgBuf, L"ERROR", 0);
+
+	MessageBox(hWnd, lpMsgBuf, L"ERROR", 0);
 	LocalFree(lpMsgBuf);
 	// while (true);
 }
@@ -101,31 +102,33 @@ void DisconnectClient(int ci)
 		closesocket(g_clients[ci].client_socket);
 		active_clients--;
 	}
-	// cout << "Client [" << ci << "] Disconnected!\n";
 }
 
 void SendPacket(int cl, void* packet)
 {
 	int psize = reinterpret_cast<unsigned char*>(packet)[0];
-	int ptype = reinterpret_cast<unsigned char*>(packet)[1];
-	OverlappedEx* over = new OverlappedEx;
-	over->event_type = OP_SEND;
-	memcpy(over->IOCP_buf, packet, psize);
-	ZeroMemory(&over->over, sizeof(over->over));
-	over->wsabuf.buf = reinterpret_cast<CHAR*>(over->IOCP_buf);
-	over->wsabuf.len = psize;
-	int ret = WSASend(g_clients[cl].client_socket, &over->wsabuf, 1, NULL, 0,
-		&over->over, NULL);
+	int ptype = reinterpret_cast<unsigned char*>(packet)[2];
+	WSA_OVER_EX* over = new WSA_OVER_EX;
+	over->_iocpop = OP_SEND;
+	memcpy(over->_buf, packet, psize);
+	ZeroMemory(&over->_wsaover, sizeof(over->_wsaover));
+	over->_wsabuf.buf = reinterpret_cast<CHAR*>(over->_buf);
+	over->_wsabuf.len = psize;
+	int ret = WSASend(g_clients[cl].client_socket, &over->_wsabuf, 1, NULL, 0,
+		&over->_wsaover, NULL);
 	if (0 != ret) {
 		int err_no = WSAGetLastError();
-		if (WSA_IO_PENDING != err_no);
+		if (WSA_IO_PENDING != err_no)
+			error_display("Error in SendPacket:", err_no);
 	}
-	// std::cout << "Send Packet [" << ptype << "] To Client : " << cl << std::endl;
 }
 
-void ProcessPacket(int ci, unsigned char packet[])
+void processpacket(int ci, char packet[])
 {
-	switch (static_cast<char>(packet[2])) {
+	char* packet_data = static_cast<char*> (packet);
+
+	unsigned char p_type = packet[2];
+	switch (p_type) {
 	case SC_MOVE_OBJECT: {
 		SC_MOVE_OBJECT_PACKET* move_packet = reinterpret_cast<SC_MOVE_OBJECT_PACKET*>(packet);
 		if (move_packet->id < MAX_CLIENTS) {
@@ -136,15 +139,17 @@ void ProcessPacket(int ci, unsigned char packet[])
 			}
 			if (ci == my_id) {
 				if (0 != move_packet->move_time) {
-					auto d_ms = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count() - move_packet->move_time;
+					unsigned long long m_t = static_cast<unsigned long long>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+					auto d_ms = m_t - move_packet->move_time;
 
 					if (global_delay < d_ms) global_delay++;
 					else if (global_delay > d_ms) global_delay--;
 				}
 			}
 		}
+		break;
 	}
-					   break;
+					 
 	case SC_ADD_OBJECT: break;
 	case SC_REMOVE_OBJECT: break;
 	case SC_LOGIN_OK: break;
@@ -162,16 +167,11 @@ void ProcessPacket(int ci, unsigned char packet[])
 		g_clients[my_id].x = login_packet->x;
 		g_clients[my_id].y = login_packet->y;
 
-		//cs_packet_teleport t_packet;
-		//t_packet.size = sizeof(t_packet);
-		//t_packet.type = CS_TELEPORT;
-		//SendPacket(my_id, &t_packet);
-
 		break;
 	}
 	case SC_CHAT: break;
 	case SC_ATTACK_RANGE: break;
-	default: 
+	default:
 		cout << "error" << endl;
 		break;
 		MessageBox(hWnd, L"Unknown Packet Type", L"ERROR", 0);
@@ -185,7 +185,7 @@ void Worker_Thread()
 	while (true) {
 		DWORD io_size;
 		unsigned long long ci;
-		OverlappedEx* over;
+		WSA_OVER_EX* over;
 		BOOL ret = GetQueuedCompletionStatus(g_hiocp, &io_size, &ci,
 			reinterpret_cast<LPWSAOVERLAPPED*>(&over), INFINITE);
 		// std::cout << "GQCS :";
@@ -194,47 +194,42 @@ void Worker_Thread()
 			int err_no = WSAGetLastError();
 			if (64 == err_no) DisconnectClient(client_id);
 			else {
-				//error_display("GQCS : ", WSAGetLastError());
+				// error_display("GQCS : ", WSAGetLastError());
 				DisconnectClient(client_id);
 			}
-			if (OP_SEND == over->event_type) delete over;
+			if (OP_SEND == over->_iocpop) delete over;
 		}
 		if (0 == io_size) {
 			DisconnectClient(client_id);
 			continue;
 		}
-		if (OP_RECV == over->event_type) {
+		if (OP_RECV == over->_iocpop) {
 			//std::cout << "RECV from Client :" << ci;
 			//std::cout << "  IO_SIZE : " << io_size << std::endl;
-			unsigned char* buf = g_clients[ci].recv_over.IOCP_buf;
-			short* ptr_size = reinterpret_cast<short*>(g_clients[ci].recv_over.IOCP_buf);
-			unsigned psize = g_clients[ci].curr_packet_size;
-			unsigned pr_size = g_clients[ci].prev_packet_data;
-			while (io_size > 0) {
-				if (0 == psize) psize = ptr_size[0];
-				if (io_size + pr_size >= psize) {
-					// 지금 패킷 완성 가능
-					unsigned char packet[MAX_PACKET_SIZE];
-					memcpy(packet, g_clients[ci].packet_buf, pr_size);
-					memcpy(packet + pr_size, buf, psize - pr_size);
-					ProcessPacket(static_cast<int>(ci), packet);
-					io_size -= psize - pr_size;
-					buf += psize - pr_size;
-					ptr_size = reinterpret_cast<short*>(buf);
-					psize = 0; pr_size = 0;
+			int remain_data = io_size + g_clients[ci]._prev_size;
+			char buf[MAX_BUFF_SIZE * 2];
+			memcpy(buf, over->_buf, remain_data);
+			short* p = reinterpret_cast<short*>(buf);
+			while (remain_data > 0) {
+				int packet_size = p[0];
+				if (packet_size <= remain_data) {
+					processpacket(static_cast<int>(ci), buf);
+					char* m_buf = buf + packet_size;
+					remain_data = remain_data - packet_size;
+					memcpy(buf, m_buf, remain_data);
+					p = reinterpret_cast<short*>(buf);
 				}
 				else {
-					memcpy(g_clients[ci].packet_buf + pr_size, buf, io_size);
-					pr_size += io_size;
-					io_size = 0;
+					break;
 				}
 			}
-			g_clients[ci].curr_packet_size = psize;
-			g_clients[ci].prev_packet_data = pr_size;
-			DWORD recv_flag = 0;
-			int ret = WSARecv(g_clients[ci].client_socket,
-				&g_clients[ci].recv_over.wsabuf, 1,
-				NULL, &recv_flag, &g_clients[ci].recv_over.over, NULL);
+			g_clients[ci]._prev_size = remain_data;
+			if (remain_data > 0) {
+				memcpy(over->_buf, p, remain_data);
+			}
+
+			do_recv(ci);
+			
 			if (SOCKET_ERROR == ret) {
 				int err_no = WSAGetLastError();
 				if (err_no != WSA_IO_PENDING)
@@ -244,27 +239,27 @@ void Worker_Thread()
 				}
 			}
 		}
-		else if (OP_SEND == over->event_type) {
-			if (io_size != over->wsabuf.len) {
-				std::cout << "Send Incomplete Error!\n";
+		else if (OP_SEND == over->_iocpop) {
+			if (io_size != over->_wsabuf.len) {
+				// std::cout << "Send Incomplete Error!\n";
 				DisconnectClient(client_id);
 			}
 			delete over;
 		}
-		else if (OP_DO_MOVE == over->event_type) {
+		else if (OP_DO_MOVE == over->_iocpop) {
 			// Not Implemented Yet
 			delete over;
 		}
 		else {
-			//std::cout << "Unknown GQCS event!\n";
-			//while (true);
+			std::cout << "Unknown GQCS event!\n";
+			while (true);
 		}
 	}
 }
 
-constexpr int DELAY_LIMIT = 100;
-constexpr int DELAY_LIMIT2 = 150;
-constexpr int ACCEPT_DELY = 50;
+constexpr unsigned long long DELAY_LIMIT = 100;
+constexpr unsigned long long DELAY_LIMIT2 = 150;
+constexpr unsigned long long ACCEPT_DELY = 50;
 
 void Adjust_Number_Of_Client()
 {
@@ -311,18 +306,14 @@ void Adjust_Number_Of_Client()
 
 	int Result = WSAConnect(g_clients[num_connections].client_socket, (sockaddr*)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 	if (0 != Result) {
-		cout << "Error connect" << endl;
-		return;
 		error_display("WSAConnect : ", GetLastError());
 	}
 
-	g_clients[num_connections].curr_packet_size = 0;
-	g_clients[num_connections].prev_packet_data = 0;
-	ZeroMemory(&g_clients[num_connections].recv_over, sizeof(g_clients[num_connections].recv_over));
-	g_clients[num_connections].recv_over.event_type = OP_RECV;
-	g_clients[num_connections].recv_over.wsabuf.buf =
-		reinterpret_cast<CHAR*>(g_clients[num_connections].recv_over.IOCP_buf);
-	g_clients[num_connections].recv_over.wsabuf.len = sizeof(g_clients[num_connections].recv_over.IOCP_buf);
+	g_clients[num_connections]._prev_size = 0;
+	ZeroMemory(&g_clients[num_connections]._wsaover, sizeof(g_clients[num_connections]._wsaover));
+	g_clients[num_connections]._wsaover._iocpop = OP_RECV;
+	g_clients[num_connections]._wsaover._wsabuf.buf = g_clients[num_connections]._wsaover._buf;
+	g_clients[num_connections]._wsaover._wsabuf.len = sizeof(g_clients[num_connections]._wsaover._buf);
 
 	DWORD recv_flag = 0;
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_clients[num_connections].client_socket), g_hiocp, num_connections, 0);
@@ -335,17 +326,7 @@ void Adjust_Number_Of_Client()
 	l_packet.type = CS_LOGIN;
 	SendPacket(num_connections, &l_packet);
 
-
-	int ret = WSARecv(g_clients[num_connections].client_socket, &g_clients[num_connections].recv_over.wsabuf, 1,
-		NULL, &recv_flag, &g_clients[num_connections].recv_over.over, NULL);
-	if (SOCKET_ERROR == ret) {
-		int err_no = WSAGetLastError();
-		if (err_no != WSA_IO_PENDING)
-		{
-			//error_display("RECV ERROR", err_no);
-			goto fail_to_connect;
-		}
-	}
+	do_recv(num_connections);
 	num_connections++;
 fail_to_connect:
 	return;
@@ -354,7 +335,7 @@ fail_to_connect:
 void Test_Thread()
 {
 	while (true) {
-		//Sleep(max(20, global_delay));
+		Sleep(max(20, global_delay));
 		Adjust_Number_Of_Client();
 
 		for (int i = 0; i < num_connections; ++i) {
@@ -370,25 +351,8 @@ void Test_Thread()
 			case 2: my_packet.direction = 2; break;
 			case 3: my_packet.direction = 3; break;
 			}
-			my_packet.move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+			my_packet.move_time = static_cast<unsigned long long>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
 			SendPacket(i, &my_packet);
-
-			//DB test
-			/*if(g_clients[i].last_chat_time + 0.5s > high_resolution_clock::now()) continue;
-			{
-				g_clients[i].last_chat_time = high_resolution_clock::now();
-
-				CS_CHAT_PACKET t_packet;
-				std::string msg;
-				msg.clear();
-				msg += 'h';
-				msg += 'i';
-				msg += '\0';
-				t_packet.size = sizeof(CS_CHAT_PACKET) - (CHAT_SIZE - msg.size());
-				strcpy_s(t_packet.mess, msg.c_str());
-				t_packet.type = CS_CHAT;
-				SendPacket(i, &t_packet);
-			}*/
 		}
 	}
 }
@@ -443,3 +407,15 @@ void GetPointCloud(int* size, float** points)
 	*points = point_cloud;
 }
 
+void do_recv(int ci)
+{
+	DWORD recv_flag = 0;
+	memset(&g_clients[ci]._wsaover._wsaover, 0, sizeof(g_clients[ci]._wsaover._wsaover));
+	g_clients[ci]._wsaover._wsabuf.len = BUF_SIZE - g_clients[ci]._prev_size;
+	g_clients[ci]._wsaover._wsabuf.buf = g_clients[ci]._wsaover._buf+ g_clients[ci]._prev_size;
+	g_clients[ci]._wsaover._iocpop = OP_RECV;
+
+	int ret = WSARecv(g_clients[ci].client_socket,
+		&g_clients[ci]._wsaover._wsabuf, 1,
+		NULL, &recv_flag, &g_clients[ci]._wsaover._wsaover, NULL);
+}
