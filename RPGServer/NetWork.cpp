@@ -141,6 +141,7 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 
 				set<int> z_list;
 				zone_check(player->_x, player->_y, z_list);
+				objects[o_id]->_last_move_time = packet->move_time;
 				for (auto& p_id : z_list) {
 					{
 						std::shared_lock<std::shared_mutex> lock(objects[p_id]->_s_lock);
@@ -214,7 +215,6 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 					std::unique_lock<std::shared_mutex> lock(player->_vl);
 					player->_view_list = new_vl;
 				}
-				objects[o_id]->_last_move_time = packet->move_time;
 				player->_movecount++;
 				if (player->_movecount > 20)
 				{

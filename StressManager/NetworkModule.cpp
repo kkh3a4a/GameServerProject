@@ -335,7 +335,7 @@ fail_to_connect:
 void Test_Thread()
 {
 	while (true) {
-		Sleep(max(20, global_delay));
+		//Sleep(max(20, global_delay));
 		Adjust_Number_Of_Client();
 
 		for (int i = 0; i < num_connections; ++i) {
@@ -352,6 +352,8 @@ void Test_Thread()
 			case 3: my_packet.direction = 3; break;
 			}
 			my_packet.move_time = static_cast<unsigned long long>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+			//if (i == 0)
+				//cout << my_packet.move_time << endl;
 			SendPacket(i, &my_packet);
 		}
 	}

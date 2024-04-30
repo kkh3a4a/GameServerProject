@@ -62,7 +62,7 @@ function event_object_Attack(def_id)
 	end
 end
 
-function event_range_Attack()
+function event_range_Attack(def_id)
 	API_Range_Attack(myid, def_id, 1000);
 end
 

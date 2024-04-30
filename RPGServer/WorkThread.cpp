@@ -238,7 +238,8 @@ void worker_thread(WSA_OVER_EX g_a_over)
 								if (objects[p_id]->_x == a_range.first && objects[p_id]->_y == a_range.second)
 								{
 									lua_getglobal(L, "event_range_Attack");
-									int status = lua_pcall(L, 0, 0, 0);
+									lua_pushnumber(L, p_id);
+									int status = lua_pcall(L, 1, 0, 0);
 								}
 							}
 						}
