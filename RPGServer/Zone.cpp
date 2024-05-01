@@ -82,7 +82,6 @@ void ZoneManager::Find(Zone*& prev, Zone*& curr,int id)
 void ZoneManager::Zonelist(set<int>& a)
 {
 	Zone* zone;
-	bool marked = false;
 	zone = head._next.get_ptr();
 	while (zone->_id != tail._id)
 	{

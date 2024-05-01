@@ -6,10 +6,10 @@ class Zone_PTR {
 	unsigned long long next;
 public:
 	Zone_PTR() : next(0) {}
-	Zone_PTR(bool marking, Zone* ptr)
+	Zone_PTR(bool removed, Zone* ptr)
 	{
 		next = reinterpret_cast<unsigned long long>(ptr);
-		if (true == marking) next = next | 1;
+		if (true == removed) next = next | 1;
 	}
 	Zone* get_ptr()
 	{
