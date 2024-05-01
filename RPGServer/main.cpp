@@ -30,9 +30,9 @@ void initObject()
 
 void initZone()
 {
-	for (int x = 0; x < ZONE_Y; ++x)
+	for (int x = 0; x <= ZONE_Y; ++x)
 	{
-		for(int y=0; y<ZONE_X;++y)
+		for(int y=0; y<=ZONE_X;++y)
 		zone[y][x] = new ZoneManager;
 	}
 }

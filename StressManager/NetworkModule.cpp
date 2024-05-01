@@ -259,7 +259,7 @@ void Worker_Thread()
 
 constexpr unsigned long long DELAY_LIMIT = 100;
 constexpr unsigned long long DELAY_LIMIT2 = 150;
-constexpr unsigned long long ACCEPT_DELY = 50;
+constexpr unsigned long long ACCEPT_DELY = 10;
 
 void Adjust_Number_Of_Client()
 {

@@ -35,7 +35,7 @@ extern std::map<std::pair<short, short>, short> World_Map;
 enum EVENT_TYPE { EV_RANDOM_MOVE, EV_RESPAWN, EV_WAIT,EV_ATTACK, EV_RANGEATTACK, EV_DEFENCE, EV_HEAL, EV_MOVE};
 
 constexpr int VIEW_RANGE = 6;
-extern  std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
+extern  std::array <std::array<class ZoneManager*, ZONE_Y + 1>, ZONE_X + 1> zone;
 
 
 enum IOCPOP

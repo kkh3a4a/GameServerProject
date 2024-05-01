@@ -2,119 +2,92 @@
 
 ZoneManager::ZoneManager()
 {
-	head = new Zone;
-	tail = new Zone;
-	head->SetNext(tail);
-	tail->SetNext(nullptr);
-	head->SetID(0x80000000);
-	tail->SetID(0x7FFFFFFF);
-	std::thread cleanupThread(&ZoneManager::backgroundCleanup, this);
-	cleanupThread.detach();
+	head._id = 0x80000000;
+	tail._id = 0x7FFFFFFF;
+	head._next = Zone_PTR{ false, &tail };
 }
 
 void ZoneManager::ADD(int id)
 {
 	while (1) {
-		//std::shared_lock<std::shared_mutex> rlock(r_lock);
-		Zone* prev = head;
-		Zone* curr = prev->GetNext();
-		while (curr->GetObjID() < id) {
-			prev = curr;
-			curr = curr->GetNext();
+		Zone* prev;
+		Zone* curr;
+		Find(prev, curr, id);
+		if (curr->_id != id) {
+			Zone* node = new Zone{ id , curr };
+			if (true == prev->_next.CAS(curr, node, false, false))
+				return;
+			delete node;
 		}
-		prev->lock();
-		curr->lock();
-		if (validate(prev, curr))
+		else
 		{
-			if (curr->GetObjID() != id) {
-				Zone* node = new Zone{ id };
-				node->SetNext(curr);
-				prev->SetNext(node);
-				curr->unlock();
-				prev->unlock();
-				
-				return;
-			}
-			else
-			{
-				curr->unlock();
-				prev->unlock();
-				return;
-			}
+			return;
 		}
-		curr->unlock();
-		prev->unlock();
 	}
 }
 
 void ZoneManager::REMOVE(int id)
 {
 	while (1) {
-		Zone* prev = head;
-		Zone* curr = prev->GetNext();
-		while (curr->GetObjID() < id) {
-			prev = curr;
-			curr = curr->GetNext();
+		Zone* prev;
+		Zone* curr;
+		Find(prev, curr, id);
+		if (curr->_id == id) {
+			Zone* succ = curr->_next.get_ptr();
+			/*if (!curr->next.attedmpMark(succ, true))
+				continue;*/
+
+			if (!curr->_next.CAS(succ, succ, false, true))
+				continue;
+			prev->_next.CAS(curr, succ, false, false);
+			return;
+
 		}
-		prev->lock();
-		curr->lock();
-		if (validate(prev, curr))
+		else
 		{
-			if (curr->GetObjID() != id) {
-				curr->unlock();
-				prev->unlock();
-				return;
-			}
-			else {
-				curr->removed = true;
-				prev->SetNext(curr->GetNext());
-				//removeObj(curr);
-				curr->unlock();
-				prev->unlock();
-				return;
-			}
+			return;
 		}
-		curr->unlock();
-		prev->unlock();
+	}
+}
+
+void ZoneManager::Find(Zone*& prev, Zone*& curr,int id)
+{
+	while(true)
+	{
+	retry:
+		prev = &head;
+		curr = prev->_next.get_ptr();
+		while (true) {
+			bool removed;
+			Zone* succ = curr->_next.get_ptr_marked(&removed);
+			while (true == removed) {
+				if (false == prev->_next.CAS(curr, succ, false, false))
+				{
+					goto retry;
+				}
+				curr = succ;
+				succ = curr->_next.get_ptr_marked(&removed);
+			}
+			if (curr->_id >= id)
+			{
+				return;
+			}
+			prev = curr;
+			curr = succ;
+		}
 	}
 }
 
 
 void ZoneManager::Zonelist(set<int>& a)
 {
-	Zone* prev = head;
-	Zone* curr = prev->GetNext();
-	while (curr->GetNext() != nullptr) {
-		a.insert(curr->GetObjID());
-		curr = curr->GetNext();
+	Zone* zone;
+	bool marked = false;
+	zone = head._next.get_ptr();
+	while (zone->_id != tail._id)
+	{
+		a.insert(zone->_id);
+		zone = zone->_next.get_ptr();
 	}
 	
-}
-void ZoneManager::removeObj(Zone* obj)
-{
-	std::lock_guard<std::mutex> lock(deletionMutex);
-	deletedObjects.push_back(obj);
-}
-
-void ZoneManager::backgroundCleanup()
-{
-	while (true) {
-		std::this_thread::sleep_for(std::chrono::seconds(600));
-		{
-			std::lock_guard<std::mutex> lock(deletionMutex);
-			for (auto obj : deletedObjects) {
-				delete obj;
-			}
-			deletedObjects.clear();
-		}
-	}
-}
-
-
-
-bool ZoneManager::validate(Zone* prev, Zone* curr)
-{
-	return (!prev->removed) &&
-		(!curr->removed) &&
-		(prev->GetNext() == curr);
 }

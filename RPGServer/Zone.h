@@ -1,59 +1,76 @@
 #pragma once
 #include"NetWork.h"
 
-
-
-class Zone {
-
-	int _id;
-	Zone* _next;
-	
+class Zone;
+class Zone_PTR {
+	unsigned long long next;
 public:
-	mutex n_lock;
-	volatile bool removed;
+	Zone_PTR() : next(0) {}
+	Zone_PTR(bool marking, Zone* ptr)
+	{
+		next = reinterpret_cast<unsigned long long>(ptr);
+		if (true == marking) next = next | 1;
+	}
+	Zone* get_ptr()
+	{
+		return reinterpret_cast<Zone*>(next & 0xFFFFFFFFFFFFFFFE);
+	}
+	bool get_removed()
+	{
+		return (next & 1) == 1;
+	}
+	Zone* get_ptr_marked(bool* removed)
+	{
+		unsigned long long cur_next = next;
+		*removed = (cur_next & 1) == 1;
+		return reinterpret_cast<Zone*>(cur_next & 0xFFFFFFFFFFFFFFFE);
+	}
+	bool CAS(unsigned long long o_next, unsigned long long n_next) {
+		return atomic_compare_exchange_strong(
+			reinterpret_cast<atomic_uint64_t*>(&next), &o_next, n_next);
 
+	}
+	bool CAS(Zone* o_ptr, Zone* n_ptr, bool o_mark, bool n_mark)
+	{
+		unsigned long long o_next = reinterpret_cast<unsigned long long>(o_ptr);
+		if (true == o_mark) o_next++;
+		unsigned long long n_next = reinterpret_cast<unsigned long long>(n_ptr);
+		if (true == n_mark) n_next++;
+		return atomic_compare_exchange_strong(
+			reinterpret_cast<atomic_uint64_t*>(&next), &o_next, n_next);
+	}
+	Zone* get_ptr(bool* removed) {
+		unsigned long long  temp = next;
+		if (0 == (temp & 1)) *removed = false;
+		else *removed = true;
+		return reinterpret_cast<Zone*>(temp & 0xFFFFFFFFFFFFFFFE);
+	}
+	bool attedmpMark(Zone* o_ptr, bool mark)
+	{
+		unsigned long long o_next = reinterpret_cast<unsigned long long>(o_ptr);
+		unsigned long long n_next = o_next;
 
-	Zone() {
-		_id = -1;
-		_next = nullptr;
-		removed = false;
-	}
-	Zone(int id) :_id(id) {}
+		if (mark) n_next = n_next | 1;
+		else n_next = n_next & 0xFFFFFFFFFFFFFFFE;
 
-	Zone(int id, Zone* next) :_id(id), _next(next) { removed = false; }
-	void SetNext(Zone* next)
-	{
-		_next = next;
-	}
-	Zone* GetNext()
-	{
-		return _next;
-	}
-
-	int GetObjID()
-	{
-		return _id;
-	}
-	void SetID(int id)
-	{
-		_id = id;
-	}
-	void lock()
-	{
-		n_lock.lock();
-	}
-	void unlock()
-	{
-		n_lock.unlock();
+		return CAS(o_next, n_next);
 	}
 };
 
+class Zone {
+
+public:
+	int _id;
+	Zone_PTR _next;
+	Zone() : _next(false, nullptr) {_id = -1;}
+	Zone(int id) :_id(id),_next(false, nullptr) {}
+	Zone(int id, Zone* next) :_id(id), _next(false, next) {}
+};
 
 class ZoneManager {
 public:
-	Zone* head;
-	Zone* tail;
-	shared_mutex r_lock;
+	Zone head;
+	Zone tail;
 	ZoneManager();
 	
 	vector<Zone*> deletedObjects;
@@ -61,8 +78,7 @@ public:
 
 	void ADD(int);
 	void REMOVE(int);
-	bool validate(Zone* prev, Zone* curr);
-	void removeObj(Zone* zone);
+	void Find(Zone*& prev, Zone*& curr, int id);
 	void Zonelist(set<int>& a);
-	void backgroundCleanup();
+
 };

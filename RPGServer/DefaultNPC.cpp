@@ -178,19 +178,19 @@ void NPC::move_NPC()
 		int y = _y;
 		if (move_queue.empty())
 		{
-			if (objects[_last_attacker]->_x - _x < -1)
+			if (objects[_last_attacker]->_x - _x < -1 && x > 0)
 			{
 				x--;
 			}
-			else if (objects[_last_attacker]->_x - _x > 1)
+			else if (objects[_last_attacker]->_x - _x > 1 && x < W_WIDTH - 1)
 			{
 				x++;
 			}
-			if (objects[_last_attacker]->_y - _y < -1)
+			if (objects[_last_attacker]->_y - _y < -1 && y > 0)
 			{
 				y--;
 			}
-			else if (objects[_last_attacker]->_y - _y > 1)
+			else if (objects[_last_attacker]->_y - _y > 1 && y < W_HEIGHT - 1)
 			{
 				y++;
 			}

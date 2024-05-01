@@ -10,7 +10,7 @@ HANDLE h_iocp;
 bool IsNight; 
 
 SOCKET g_s_socket, g_c_socket;
-std::array <std::array<class ZoneManager*, ZONE_Y>, ZONE_X> zone;
+std::array <std::array<class ZoneManager*, ZONE_Y + 1>, ZONE_X + 1> zone;
 concurrency::concurrent_priority_queue <EVENT> timer_queue;
 SOCKET DB_socket;
 WSA_OVER_EX DB_wsa_recv_over;
@@ -83,8 +83,6 @@ void WSA_OVER_EX::processpacket(int o_id, void* pk)
 			s_packet.type = SC_LOGIN_FAIL;
 			player->send_packet(&s_packet);
 			login_fail_disconnect(o_id);
-			
-
 		}
 
 		break;
